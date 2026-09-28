@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grupo Germânica · Relatório semanal de mídia · 21 a 27 de setembro de 2026</title>
+<meta name="description" content="Relatório semanal de mídia paga e chegada de leads no CRM. Grupo Germânica, 21 a 27 de setembro de 2026. Stroke.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Tema claro. Os nomes são o PAPEL, não a cor: --surface é o fundo da página e --ink é o
+       texto mais forte. Antes chamavam --black e --white, e um deles ia acabar guardando o
+       oposto do próprio nome. Trocar o tema é trocar só este bloco. */
+    --stroke-red:#e00c1f;       /* o #ff1429 da marca não passa contraste em texto sobre branco */
+    --surface:#ffffff;
+    --surface-2:#f6f6f8;        /* hover de linha, caixa da análise */
+    --border:#e4e4e9;
+    --border-strong:#c9c9d2;
+    --ink:#0a0a0a;
+    --text:#3b3b44;
+    --muted:#70707c;            /* 4.6:1 sobre branco */
+
+    /* Cores de dado. São as do produto escurecidas para ler sobre branco — o verde e o azul
+       originais (#3fbf82, #6d9bff) somem no claro. Mesmo papel, mesma ordem. */
+    --venda:#0f9d58;
+    --perda:#d32f3c;
+    --meta:#2b6fe0;
+    --alerta:#b87708;
+    --neutro:#a8a8b2;
+
+    /* papéis nos gráficos */
+    --c-midia:var(--meta);      /* leads gerados na mídia */
+    --c-crm:#82828f;            /* leads registrados no CRM */
+    --c-agend:var(--meta);      /* em andamento */
+    --c-pend:var(--alerta);     /* parado, sem atendimento */
+    --c-perd:#82828f;           /* finalizado sem venda */
+    --c-vend:var(--venda);      /* finalizado com venda */
+
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+    --sp-6:24px; --sp-8:32px; --sp-12:48px; --sp-16:64px;
+    --r:6px;
+
+    --sans:"Geist",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --display:"Archivo Black",var(--sans);
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--surface);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:0 var(--sp-6)}
+  @media (max-width:600px){.wrap{padding:0 var(--sp-4)}}
+
+  /* régua vermelha: assinatura da marca, uma vez só */
+  .regua{height:3px;background:var(--stroke-red)}
+
+  h1,h2,h3{margin:0;font-weight:400}
+  h1{font-family:var(--display);font-size:clamp(28px,6vw,44px);line-height:1.05;letter-spacing:-.01em;color:var(--ink)}
+  h2{font-family:var(--display);font-size:clamp(19px,3.4vw,26px);line-height:1.15;color:var(--ink)}
+  h3{font-size:14px;font-weight:600;color:var(--ink)}
+  p{margin:0}
+
+  .num{font-variant-numeric:tabular-nums}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .apoio{color:var(--muted);font-size:14px;line-height:1.5}
+  .max-leitura{max-width:62ch}
+
+  /* ── cabeçalho ───────────────────────────────────────────── */
+  .topo{padding:var(--sp-8) 0 var(--sp-12)}
+  .topo-marca{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-8)}
+  .topo-marca img{display:block;height:20px;width:auto}
+  .topo-marca span{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    padding-left:var(--sp-3);border-left:1px solid var(--border-strong)
+  }
+  .topo-linha{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-4)}
+  .topo-sub{margin-top:var(--sp-2);color:var(--muted);font-size:15px}
+  .periodo{text-align:right}
+  .periodo .rot{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .periodo .datas{font-family:var(--mono);font-size:clamp(15px,2.6vw,18px);color:var(--ink);margin-top:2px;white-space:nowrap}
+  @media (max-width:640px){.periodo{text-align:left}}
+
+  /* ── faixa de totais ─────────────────────────────────────── */
+  .totais{
+    border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    display:grid;grid-template-columns:repeat(3,1fr);
+  }
+  .kpi{padding:var(--sp-6) var(--sp-4) var(--sp-6) 0;border-right:1px solid var(--border)}
+  .kpi:nth-child(3n){border-right:0;padding-right:0}
+  .kpi:nth-child(n+4){border-top:1px solid var(--border)}
+  .kpi .rot{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .kpi .val{
+    font-size:clamp(24px,4.4vw,34px);font-weight:600;color:var(--ink);
+    letter-spacing:-.02em;line-height:1.1;margin-top:var(--sp-2);font-variant-numeric:tabular-nums
+  }
+  .kpi .nota{font-size:13px;color:var(--muted);margin-top:var(--sp-2);line-height:1.4}
+  .kpi.destaque .val{color:var(--stroke-red)}
+  @media (max-width:760px){
+    .totais{grid-template-columns:repeat(2,1fr)}
+    .kpi:nth-child(3n){border-right:1px solid var(--border);padding-right:var(--sp-4)}
+    .kpi:nth-child(2n){border-right:0;padding-right:0}
+    .kpi:nth-child(n+3){border-top:1px solid var(--border)}
+  }
+
+  /* ── seções ──────────────────────────────────────────────── */
+  section{padding:var(--sp-16) 0}
+  @media (max-width:600px){section{padding:var(--sp-12) 0}}
+  .sec-cab{margin-bottom:var(--sp-8)}
+  .sec-cab p{margin-top:var(--sp-3)}
+
+  .legenda{display:flex;flex-wrap:wrap;gap:var(--sp-4) var(--sp-6);margin-top:var(--sp-4)}
+  .legenda span{display:inline-flex;align-items:center;gap:var(--sp-2);font-size:13px;color:var(--muted)}
+  .chave{width:10px;height:10px;border-radius:50%;flex:none}
+  .chave.q{border-radius:2px}
+
+  /* ── gráfico halter: mídia → CRM ─────────────────────────── */
+  .halter{border-top:1px solid var(--border);max-width:940px}
+  .h-linha{
+    display:grid;grid-template-columns:150px 1fr 82px;align-items:center;
+    gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--border)
+  }
+  .h-marca{font-size:14px;color:var(--text)}
+  .h-trilho{position:relative;height:22px}
+  .h-trilho::before{
+    content:"";position:absolute;left:0;right:0;top:50%;height:1px;
+    background:var(--border-strong);transform:translateY(-50%)
+  }
+  .h-grade{position:absolute;inset:0}
+  .h-grade i{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--border)}
+  .h-conector{
+    position:absolute;top:50%;height:2px;background:var(--border-strong);transform:translateY(-50%);border-radius:1px
+  }
+  .h-pt{
+    position:absolute;top:50%;width:11px;height:11px;border-radius:50%;
+    transform:translate(-50%,-50%);box-shadow:0 0 0 2px var(--surface)
+  }
+  .h-pt.midia{background:var(--c-midia)}
+  .h-pt.crm{background:var(--c-crm)}
+  .h-taxa{font-family:var(--mono);font-size:15px;text-align:right;color:var(--ink);white-space:nowrap}
+  .h-taxa sup{color:var(--muted);font-family:var(--sans);font-size:11px;margin-left:1px}
+  .h-eixo{max-width:940px;display:grid;grid-template-columns:150px 1fr 82px;gap:var(--sp-4);padding-top:var(--sp-2)}
+  .h-eixo-marcas{position:relative;height:16px}
+  .h-eixo-marcas i{
+    position:absolute;top:0;font-family:var(--mono);font-size:11px;color:var(--muted);
+    font-style:normal;transform:translateX(-50%)
+  }
+  .h-eixo-marcas i:first-child{transform:none}
+  .h-eixo-marcas i:last-child{transform:translateX(-100%)}
+  @media (max-width:720px){
+    .h-linha{grid-template-columns:1fr auto;gap:var(--sp-2) var(--sp-3);padding:var(--sp-4) 0}
+    .h-marca{font-size:15px}
+    .h-trilho{grid-column:1 / -1;height:20px}
+    .h-eixo{grid-template-columns:1fr}
+    .h-taxa{font-size:16px}
+  }
+
+  /* ── tabela exata ────────────────────────────────────────── */
+  .dica-scroll{display:none;font-size:13px;color:var(--muted);margin-top:var(--sp-8)}
+  @media (max-width:760px){.dica-scroll{display:block}}
+  @media (min-width:761px){.tabela-caixa{margin-top:var(--sp-8)!important}}
+  .tabela-caixa{margin-top:var(--sp-4);overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}
+  caption{text-align:left;font-size:13px;color:var(--muted);padding-bottom:var(--sp-3)}
+  th,td{padding:var(--sp-3) var(--sp-3);border-bottom:1px solid var(--border);white-space:nowrap}
+  th{
+    font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--muted);text-align:right;vertical-align:bottom
+  }
+  th:first-child,td:first-child{
+    text-align:left;padding-left:0;position:sticky;left:0;background:var(--surface);z-index:1
+  }
+  th:last-child,td:last-child{padding-right:0}
+  td{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--text)}
+  td:first-child{font-family:var(--sans);color:var(--ink)}
+  tbody tr:hover td{background:var(--surface-2)}
+  tbody tr:hover td:first-child{background:var(--surface-2)}
+  tfoot td{border-bottom:0;border-top:1px solid var(--border-strong);color:var(--ink);font-weight:500;padding-top:var(--sp-4)}
+  tfoot td:first-child{font-weight:600}
+  sup.ref{color:var(--muted);font-family:var(--sans);font-size:11px}
+
+  /* ── funil ───────────────────────────────────────────────── */
+  .funil{border-top:1px solid var(--border);max-width:940px}
+  .f-linha{
+    display:grid;grid-template-columns:150px 1fr 172px;align-items:center;
+    gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--border)
+  }
+  .f-marca{font-size:14px;color:var(--text)}
+  .f-barra{display:flex;height:14px;gap:2px;align-items:center}
+  .f-barra i{display:block;height:100%;border-radius:2px;min-width:2px}
+  .f-nums{display:flex;justify-content:flex-end;gap:var(--sp-4)}
+  .f-num{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:14px;color:var(--text)}
+  .f-num b{width:8px;height:8px;border-radius:2px;flex:none}
+  @media (max-width:720px){
+    .f-linha{grid-template-columns:1fr;gap:var(--sp-2);padding:var(--sp-4) 0}
+    .f-marca{font-size:15px;color:var(--ink)}
+    .f-nums{justify-content:flex-start;gap:var(--sp-6)}
+  }
+
+  /* ── vendas ──────────────────────────────────────────────── */
+  .vendas{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+  .v-item{background:var(--surface);padding:var(--sp-6) var(--sp-4) var(--sp-6) 0}
+  .v-item:not(:first-child){padding-left:var(--sp-4)}
+  .v-marca{font-size:13px;color:var(--muted);margin-bottom:var(--sp-3)}
+  .v-fat{font-size:clamp(20px,3.2vw,26px);font-weight:600;color:var(--venda);letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+  .v-qtd{font-size:14px;color:var(--text);margin-top:var(--sp-2)}
+  .v-qtd .mono{color:var(--ink)}
+  @media (max-width:860px){.vendas{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:440px){.vendas{grid-template-columns:1fr}.v-item{padding-left:0!important;padding-right:0}}
+  .sem-venda{margin-top:var(--sp-6)}
+
+  /* ── análise (placeholder) ───────────────────────────────── */
+  .analise{
+    background:var(--surface-2);border:1px solid var(--border);
+    border-left:3px solid var(--stroke-red);border-radius:var(--r);
+    padding:var(--sp-8);margin-top:var(--sp-6)
+  }
+  @media (max-width:600px){.analise{padding:var(--sp-6) var(--sp-4)}}
+  .analise .aviso{
+    display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--stroke-red);border:1px solid var(--stroke-red);border-radius:3px;
+    padding:3px 8px;margin-bottom:var(--sp-4)
+  }
+  .analise h3{margin-bottom:var(--sp-3)}
+  .analise p{color:var(--muted);font-style:italic;max-width:68ch}
+  .analise p + p{margin-top:var(--sp-3)}
+
+  /* ── rodapé ──────────────────────────────────────────────── */
+  footer{border-top:1px solid var(--border);padding:var(--sp-12) 0 var(--sp-16)}
+  .notas{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-8)}
+  @media (max-width:760px){.notas{grid-template-columns:1fr;gap:var(--sp-6)}}
+  .nota-item{display:flex;gap:var(--sp-4)}
+  .nota-item .idx{
+    font-family:var(--mono);font-size:13px;color:var(--stroke-red);
+    padding-top:2px;flex:none
+  }
+  .nota-item h3{margin-bottom:var(--sp-2)}
+  .nota-item p{font-size:14px;color:var(--muted);line-height:1.6}
+  .rodape-fim{
+    margin-top:var(--sp-12);padding-top:var(--sp-6);border-top:1px solid var(--border);
+    display:flex;flex-wrap:wrap;gap:var(--sp-3) var(--sp-6);justify-content:space-between;
+    font-size:13px;color:var(--muted)
+  }
+  .rodape-fim img{height:16px;width:auto;opacity:.7;display:block}
+
+  .sem-js{
+    margin:var(--sp-8) 0;padding:var(--sp-4);border:1px solid var(--perda);
+    border-radius:var(--r);color:var(--perda);font-size:14px
+  }
+
+  @media (prefers-reduced-motion:no-preference){
+    tbody tr td{transition:background .15s ease}
+  }
+  @media print{
+    /* A régua vermelha é fundo, e impressora costuma descartar fundo. Força a cor. */
+    .regua{background:var(--stroke-red);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    section{padding:24px 0;break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="regua"></div>
+
+<div class="wrap">
+
+  <header class="topo">
+    <div class="topo-marca">
+      <img src="stroke-black.png" alt="Stroke" width="80" height="20">
+      <span>Relatório semanal de mídia</span>
+    </div>
+    <div class="topo-linha">
+      <div>
+        <h1>Grupo Germânica</h1>
+        <p class="topo-sub">Investimento em mídia paga e chegada de leads no CRM, marca a marca.</p>
+      </div>
+      <div class="periodo">
+        <div class="rot">Semana</div>
+        <div class="datas">21/09 a 27/09 de 2026</div>
+      </div>
+    </div>
+  </header>
+
+  <noscript>
+    <p class="sem-js">Este relatório monta os números e os gráficos no navegador. Ative o JavaScript para visualizar o conteúdo.</p>
+  </noscript>
+
+  <div id="totais" class="totais"></div>
+
+  <main>
+    <section id="midia-crm">
+      <div class="sec-cab">
+        <h2>Da mídia ao CRM, marca a marca</h2>
+        <p class="apoio max-leitura">
+          O ponto azul é o que as plataformas de anúncio entregaram na semana. O ponto cinza é
+          quanto disso virou registro no CRM da concessionária. A distância entre os dois é o que
+          se perde no caminho, e a porcentagem à direita é a métrica principal deste relatório.
+        </p>
+        <div class="legenda">
+          <span><i class="chave" style="background:var(--c-midia)"></i>Gerados na mídia</span>
+          <span><i class="chave" style="background:var(--c-crm)"></i>Registrados no CRM</span>
+        </div>
+      </div>
+
+      <div id="halter" class="halter"></div>
+
+      <p class="dica-scroll">Arraste a tabela para o lado para ver todas as colunas.</p>
+      <div class="tabela-caixa">
+        <table id="tabela-midia">
+          <caption>Números exatos da semana, ordenados por investimento.</caption>
+        </table>
+      </div>
+    </section>
+
+    <section id="funil">
+      <div class="sec-cab">
+        <h2>Depois que o lead entra</h2>
+        <p class="apoio max-leitura">
+          Onde cada lead da semana parou no CRM.
+          <strong style="color:var(--text);font-weight:500">Em agendamento</strong> tem agendamento
+          criado e segue em andamento;
+          <strong style="color:var(--text);font-weight:500">sem atendimento</strong> entrou e ninguém
+          mexeu;
+          <strong style="color:var(--text);font-weight:500">perdido</strong> e
+          <strong style="color:var(--text);font-weight:500">vendido</strong> já foram finalizados.
+          Cada lead está em um só estado, então a barra é o total registrado da marca.
+        </p>
+        <div class="legenda">
+          <span><i class="chave q" style="background:var(--c-agend)"></i>Em agendamento</span>
+          <span><i class="chave q" style="background:var(--c-pend)"></i>Sem atendimento</span>
+          <span><i class="chave q" style="background:var(--c-perd)"></i>Perdido</span>
+          <span><i class="chave q" style="background:var(--c-vend)"></i>Vendido</span>
+        </div>
+      </div>
+      <div id="funil-lista" class="funil"></div>
+    </section>
+
+    <section id="vendas">
+      <div class="sec-cab">
+        <h2>Vendas faturadas na semana</h2>
+        <p class="apoio max-leitura">
+          As vendas contam pela data em que foram faturadas, não pela data de entrada do lead.
+          Por isso uma marca pode faturar mais carros do que o número de leads que ela recebeu
+          nesta semana: parte dessas vendas começou em leads de semanas anteriores.
+        </p>
+      </div>
+      <div id="vendas-lista" class="vendas"></div>
+      <p id="sem-venda" class="apoio sem-venda"></p>
+    </section>
+
+    <section id="leitura">
+      <div class="sec-cab">
+        <h2>Leitura da semana</h2>
+        <p class="apoio max-leitura">Análise escrita pelo time de mídia da Stroke.</p>
+      </div>
+      <div class="analise">
+        <span class="aviso">Texto de exemplo, substituir antes de enviar</span>
+        <h3>Exemplo de como este bloco é preenchido</h3>
+        <p>
+          Aqui entram duas ou três observações da semana: o que explica o movimento de uma marca
+          específica, o que foi ajustado nas campanhas e o que será acompanhado na próxima semana.
+        </p>
+        <p>
+          Este parágrafo é conteúdo de exemplo. Nenhuma análise, comparação com semana anterior
+          ou projeção deve ser publicada sem ser escrita e revisada pelo time.
+        </p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="notas">
+      <div class="nota-item">
+        <span class="idx">1</span>
+        <div>
+          <h3>Por que uma marca passa de 100%</h3>
+          <p>
+            Jeep e Volvo registraram no CRM mais leads do que a mídia contou. Isso é esperado:
+            o CRM recebe contatos de origens que a plataforma de anúncio não contabiliza, e um
+            lead que chega no domingo à noite costuma entrar no sistema na segunda-feira. Passar
+            de 100% não é erro de medição nem mérito da operação, é diferença de calendário e de
+            origem entre os dois sistemas.
+          </p>
+        </div>
+      </div>
+      <div class="nota-item">
+        <span class="idx">2</span>
+        <div>
+          <h3>Por que taxa baixa nem sempre é falha de atendimento</h3>
+          <p>
+            Tennessee Harley-Davidson tem a menor taxa da semana e, ao mesmo tempo, o menor custo
+            por lead da lista. O anúncio de WhatsApp gera muita conversa e nem toda conversa vira
+            um registro no CRM. Volume alto e barato costuma vir acompanhado de taxa de registro
+            menor, o que pede leitura junto do custo por lead e não isoladamente.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="rodape-fim">
+      <img src="stroke-black.png" alt="Stroke" width="64" height="16">
+      <span>Grupo Germânica · Semana de 21 a 27 de setembro de 2026</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // Fonte única de verdade. Gráficos, tabela e totais saem daqui.
+  // ponytail: dado fixo no arquivo porque o relatório é a foto de uma semana.
+  var DADOS = [
+    // agend/pend/perd/vend são os quatro `status` do CRM (scheduled, pending, sale_not_performed,
+    // sale_performed). São exclusivos e somam `crm` em todas as marcas — a barra do funil é o total.
+    // `vendas`/`fat` é OUTRO universo: venda conta pela data de faturamento, não pela semana em que
+    // o lead entrou. Por isso GWM tem vend:2 aqui e 5 vendas faturadas lá embaixo.
+    {marca:"GWM Germânica",           curto:"GWM",             inv:13793.33, midia:221, crm:180, agend:100, pend:45,  perd:33, vend:2, vendas:5, fat:1169995.96},
+    {marca:"Omoda Jaecoo Germânica",  curto:"Omoda Jaecoo",    inv:11594.49, midia:411, crm:327, agend:140, pend:109, perd:78, vend:0, vendas:0, fat:0},
+    {marca:"Germânica Volkswagen",    curto:"Volkswagen",      inv:6679.31,  midia:254, crm:209, agend:145, pend:31,  perd:33, vend:0, vendas:0, fat:0},
+    {marca:"Toyota Nipônica",         curto:"Toyota Nipônica", inv:4738.37,  midia:173, crm:152, agend:106, pend:3,   perd:43, vend:0, vendas:2, fat:558290.00},
+    {marca:"Jeep Germânica",          curto:"Jeep",            inv:4226.98,  midia:291, crm:298, agend:289, pend:3,   perd:6,  vend:0, vendas:1, fat:264951.72, nota:1},
+    {marca:"Germânica Kia",           curto:"Kia",             inv:3036.07,  midia:45,  crm:37,  agend:35,  pend:0,   perd:2,  vend:0, vendas:0, fat:0},
+    {marca:"Germânica RAM",           curto:"RAM",             inv:3011.34,  midia:95,  crm:76,  agend:70,  pend:1,   perd:5,  vend:0, vendas:0, fat:0},
+    {marca:"Escandinávia Volvo",      curto:"Volvo",           inv:2726.67,  midia:62,  crm:74,  agend:48,  pend:1,   perd:25, vend:0, vendas:0, fat:0, nota:1},
+    {marca:"Tennessee Harley-Davidson",curto:"Harley-Davidson",inv:2602.66,  midia:165, crm:112, agend:81,  pend:4,   perd:27, vend:0, vendas:2, fat:252000.00, nota:2}
+  ];
+
+  var fmtInt  = new Intl.NumberFormat("pt-BR");
+  var fmtBRL  = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2});
+  var fmtBRL0 = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:0,maximumFractionDigits:0});
+  var fmtPct  = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+
+  function pct(v){ return fmtPct.format(v) + "%"; }
+  function taxa(d){ return d.crm / d.midia * 100; }
+  function cpl(d){ return d.inv / d.midia; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function soma(campo){ return DADOS.reduce(function(a,d){ return a + d[campo]; },0); }
+
+  var T = {
+    inv:soma("inv"), midia:soma("midia"), crm:soma("crm"),
+    agend:soma("agend"), pend:soma("pend"), perd:soma("perd"), vend:soma("vend"),
+    vendas:soma("vendas"), fat:soma("fat")
+  };
+
+  /* ── totais da semana ───────────────────────────────────── */
+  var kpis = [
+    {rot:"Investimento",    val:fmtBRL.format(T.inv),  nota:"Mídia paga nas nove marcas"},
+    {rot:"Gerados na mídia",val:fmtInt.format(T.midia),nota:"Leads entregues pelas plataformas de anúncio"},
+    {rot:"Leads no CRM",    val:fmtInt.format(T.crm),  nota:"Viraram registro no CRM da concessionária"},
+    {rot:"Chegou ao CRM",   val:pct(T.crm/T.midia*100),nota:"Leads no CRM dividido por gerados na mídia", destaque:true},
+    {rot:"Vendas faturadas",val:fmtInt.format(T.vendas),nota:"Contadas pela data do faturamento"},
+    {rot:"Faturamento",     val:fmtBRL0.format(T.fat), nota:"Soma das vendas faturadas na semana"}
+  ];
+  document.getElementById("totais").innerHTML = kpis.map(function(k){
+    return '<div class="kpi' + (k.destaque ? " destaque" : "") + '">' +
+      '<div class="rot">' + esc(k.rot) + '</div>' +
+      '<div class="val">' + esc(k.val) + '</div>' +
+      '<div class="nota">' + esc(k.nota) + '</div>' +
+    '</div>';
+  }).join("");
+
+  /* ── gráfico halter: mídia → CRM ────────────────────────── */
+  var TICKS = [0,100,200,300,400];
+  var ESCALA = 420; // acima do maior valor da semana (411)
+
+  function posicao(v){ return (v / ESCALA) * 100; }
+
+  var grade = TICKS.map(function(t){
+    return '<i style="left:' + posicao(t) + '%"></i>';
+  }).join("");
+
+  document.getElementById("halter").innerHTML =
+    DADOS.map(function(d){
+      var a = posicao(Math.min(d.midia, d.crm));
+      var b = posicao(Math.max(d.midia, d.crm));
+      var ref = d.nota ? '<sup>' + d.nota + '</sup>' : "";
+      return '<div class="h-linha">' +
+        '<div class="h-marca">' + esc(d.curto) + '</div>' +
+        '<div class="h-trilho" role="img" aria-label="' +
+            esc(d.curto + ": " + d.midia + " leads gerados na mídia, " + d.crm +
+                " registrados no CRM, " + pct(taxa(d)) + " de chegada") + '">' +
+          '<div class="h-grade" aria-hidden="true">' + grade + '</div>' +
+          '<div class="h-conector" style="left:' + a + '%;width:' + (b-a) + '%"></div>' +
+          '<div class="h-pt midia" style="left:' + posicao(d.midia) + '%" title="Gerados na mídia: ' + d.midia + '"></div>' +
+          '<div class="h-pt crm" style="left:' + posicao(d.crm) + '%" title="Registrados no CRM: ' + d.crm + '"></div>' +
+        '</div>' +
+        '<div class="h-taxa">' + pct(taxa(d)) + ref + '</div>' +
+      '</div>';
+    }).join("") +
+    '<div class="h-eixo" aria-hidden="true"><div></div><div class="h-eixo-marcas">' +
+      TICKS.map(function(t){ return '<i style="left:' + posicao(t) + '%">' + fmtInt.format(t) + '</i>'; }).join("") +
+    '</div><div></div></div>';
+
+  /* ── tabela exata ───────────────────────────────────────── */
+  var colunas = ["Marca","Investimento","Custo por lead","Gerados na mídia","Leads no CRM","Chegou ao CRM"];
+  document.getElementById("tabela-midia").insertAdjacentHTML("beforeend",
+    '<thead><tr>' + colunas.map(function(c){
+      return '<th scope="col">' + esc(c) + '</th>';
+    }).join("") + '</tr></thead>' +
+    '<tbody>' + DADOS.map(function(d){
+      var ref = d.nota ? '<sup class="ref">' + d.nota + '</sup>' : "";
+      return '<tr>' +
+        '<th scope="row" style="font-family:var(--sans);font-weight:400;font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">' + esc(d.marca) + '</th>' +
+        '<td>' + fmtBRL.format(d.inv) + '</td>' +
+        '<td>' + fmtBRL.format(cpl(d)) + '</td>' +
+        '<td>' + fmtInt.format(d.midia) + '</td>' +
+        '<td>' + fmtInt.format(d.crm) + '</td>' +
+        '<td>' + pct(taxa(d)) + ref + '</td>' +
+      '</tr>';
+    }).join("") + '</tbody>' +
+    '<tfoot><tr>' +
+      '<td>Total</td>' +
+      '<td>' + fmtBRL.format(T.inv) + '</td>' +
+      '<td>' + fmtBRL.format(T.inv/T.midia) + '</td>' +
+      '<td>' + fmtInt.format(T.midia) + '</td>' +
+      '<td>' + fmtInt.format(T.crm) + '</td>' +
+      '<td>' + pct(T.crm/T.midia*100) + '</td>' +
+    '</tr></tfoot>'
+  );
+
+  /* ── funil depois da entrada ────────────────────────────── */
+  // Se os quatro estados deixarem de somar o total do CRM, a barra vira mentira — e foi
+  // exatamente esse o bug da primeira versão. Falha barulhento em vez de desenhar errado.
+  DADOS.forEach(function(d){
+    if(d.agend + d.pend + d.perd + d.vend !== d.crm){
+      throw new Error("Estados não somam o CRM em " + d.marca);
+    }
+  });
+
+  var ESTADOS = [
+    {campo:"agend", cor:"--c-agend", rot:"em agendamento"},
+    {campo:"pend",  cor:"--c-pend",  rot:"sem atendimento"},
+    {campo:"perd",  cor:"--c-perd",  rot:"perdidos"},
+    {campo:"vend",  cor:"--c-vend",  rot:"vendidos"}
+  ];
+  var maxFunil = DADOS.reduce(function(m,d){ return Math.max(m, d.crm); }, 0);
+
+  document.getElementById("funil-lista").innerHTML = DADOS.map(function(d){
+    var rotulo = ESTADOS.map(function(e){ return d[e.campo] + " " + e.rot; }).join(", ");
+    return '<div class="f-linha">' +
+      '<div class="f-marca">' + esc(d.curto) + '</div>' +
+      '<div class="f-barra" role="img" aria-label="' + esc(d.curto + ": " + rotulo) + '">' +
+        ESTADOS.map(function(e){
+          if(!d[e.campo]) return "";
+          return '<i style="width:' + (d[e.campo]/maxFunil*100) + '%;background:var(' + e.cor + ')"></i>';
+        }).join("") +
+      '</div>' +
+      '<div class="f-nums">' +
+        ESTADOS.map(function(e){
+          return '<span class="f-num"><b style="background:var(' + e.cor + ')"></b>' +
+            fmtInt.format(d[e.campo]) + '</span>';
+        }).join("") +
+      '</div>' +
+    '</div>';
+  }).join("");
+
+  /* ── vendas e faturamento ───────────────────────────────── */
+  var comVenda = DADOS.filter(function(d){ return d.vendas > 0; });
+  var semVenda = DADOS.filter(function(d){ return d.vendas === 0; });
+
+  document.getElementById("vendas-lista").innerHTML = comVenda.map(function(d){
+    return '<div class="v-item">' +
+      '<div class="v-marca">' + esc(d.marca) + '</div>' +
+      '<div class="v-fat">' + fmtBRL0.format(d.fat) + '</div>' +
+      '<div class="v-qtd"><span class="mono">' + d.vendas + '</span> ' +
+        (d.vendas === 1 ? "venda faturada" : "vendas faturadas") + '</div>' +
+    '</div>';
+  }).join("");
+
+  var nomes = semVenda.map(function(d){ return d.curto; });
+  document.getElementById("sem-venda").textContent =
+    nomes.slice(0,-1).join(", ") + " e " + nomes[nomes.length-1] +
+    " não tiveram venda faturada entre 21 e 27 de setembro.";
+})();
+</script>
+</body>
+</html>
