@@ -39,6 +39,16 @@
     --c-perd:#82828f;           /* finalizado sem venda */
     --c-vend:var(--venda);      /* finalizado com venda */
 
+    /* Etapa de atendimento é ESCADA, não categoria: rampa sequencial clara→escura, para o olho
+       ler progresso. Cores categóricas aqui competiriam com a faixa de status logo acima.
+       Todas passam 3:1 sobre branco — "só tentativa" é o maior segmento (2 de cada 3 leads) e,
+       se sumisse no fundo, a barra pareceria mais curta do que o total da marca. */
+    --e-nada:repeating-linear-gradient(135deg,#82828f 0 2px,#e4e4e9 2px 5px); /* hachura = sem registro, não é etapa */
+    --e-tent:#6a90d4;
+    --e-falou:#2f62b8;
+    --e-negoc:#173d7a;
+    --e-visita:var(--venda);
+
     --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
     --sp-6:24px; --sp-8:32px; --sp-12:48px; --sp-16:64px;
     --r:6px;
@@ -207,16 +217,24 @@
     .f-nums{justify-content:flex-start;gap:var(--sp-6)}
   }
 
+  /* duas faixas na mesma seção */
+  .sub-cab{margin-bottom:var(--sp-4)}
+  .sub-cab h3{font-size:15px;margin-bottom:var(--sp-2)}
+  .sub-cab-2{margin-top:var(--sp-12)}
+  /* faixa de etapa: uma porcentagem em vez de cinco números, espelhando a seção da mídia */
+  .f-pct{font-family:var(--mono);font-size:15px;text-align:right;color:var(--ink);white-space:nowrap}
+  .f-pct small{display:block;font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:2px}
+  @media (max-width:720px){.f-pct{text-align:left}}
+
   /* ── vendas ──────────────────────────────────────────────── */
-  .vendas{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
-  .v-item{background:var(--surface);padding:var(--sp-6) var(--sp-4) var(--sp-6) 0}
-  .v-item:not(:first-child){padding-left:var(--sp-4)}
+  /* auto-fill: o número de marcas com venda muda toda semana. Grade fixa de 4 colunas com fundo
+     cinza no container mostrava as células vazias como um bloco cinza quando eram 5 marcas. */
+  .vendas{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));column-gap:var(--sp-6)}
+  .v-item{padding:var(--sp-6) 0;border-top:1px solid var(--border)}
   .v-marca{font-size:13px;color:var(--muted);margin-bottom:var(--sp-3)}
   .v-fat{font-size:clamp(20px,3.2vw,26px);font-weight:600;color:var(--venda);letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
   .v-qtd{font-size:14px;color:var(--text);margin-top:var(--sp-2)}
   .v-qtd .mono{color:var(--ink)}
-  @media (max-width:860px){.vendas{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:440px){.vendas{grid-template-columns:1fr}.v-item{padding-left:0!important;padding-right:0}}
   .sem-venda{margin-top:var(--sp-6)}
 
   /* ── análise (placeholder) ───────────────────────────────── */
@@ -246,8 +264,9 @@
   }
   .nota-item h3{margin-bottom:var(--sp-2)}
   .nota-item p{font-size:14px;color:var(--muted);line-height:1.6}
+  .carimbo{margin-top:var(--sp-12);font-size:13px;color:var(--muted);line-height:1.6;max-width:72ch}
   .rodape-fim{
-    margin-top:var(--sp-12);padding-top:var(--sp-6);border-top:1px solid var(--border);
+    margin-top:var(--sp-6);padding-top:var(--sp-6);border-top:1px solid var(--border);
     display:flex;flex-wrap:wrap;gap:var(--sp-3) var(--sp-6);justify-content:space-between;
     font-size:13px;color:var(--muted)
   }
@@ -325,14 +344,21 @@
       <div class="sec-cab">
         <h2>Depois que o lead entra</h2>
         <p class="apoio max-leitura">
-          Onde cada lead da semana parou no CRM.
+          Duas leituras do mesmo lead, que respondem perguntas diferentes: em que situação ele ficou,
+          e até onde o atendimento foi. Um lead perdido pode ter sido negociado antes de se perder,
+          então as duas faixas abaixo não são a mesma coisa vista duas vezes.
+        </p>
+      </div>
+
+      <div class="sub-cab">
+        <h3>Onde o lead parou</h3>
+        <p class="apoio max-leitura">
           <strong style="color:var(--text);font-weight:500">Em agendamento</strong> tem agendamento
           criado e segue em andamento;
           <strong style="color:var(--text);font-weight:500">sem atendimento</strong> entrou e ninguém
           mexeu;
           <strong style="color:var(--text);font-weight:500">perdido</strong> e
           <strong style="color:var(--text);font-weight:500">vendido</strong> já foram finalizados.
-          Cada lead está em um só estado, então a barra é o total registrado da marca.
         </p>
         <div class="legenda">
           <span><i class="chave q" style="background:var(--c-agend)"></i>Em agendamento</span>
@@ -342,6 +368,23 @@
         </div>
       </div>
       <div id="funil-lista" class="funil"></div>
+
+      <div class="sub-cab sub-cab-2">
+        <h3>Até onde o atendimento chegou</h3>
+        <p class="apoio max-leitura">
+          Cada lead aparece no ponto mais avançado que alcançou. A escala vai do claro ao escuro
+          conforme o atendimento avança, e a porcentagem à direita é a fatia em que o vendedor
+          registrou ter falado com o cliente — contato feito, negociação ou visita.
+        </p>
+        <div class="legenda">
+          <span><i class="chave q" style="background:var(--e-nada)"></i>Nada registrado</span>
+          <span><i class="chave q" style="background:var(--e-tent)"></i>Só tentativa</span>
+          <span><i class="chave q" style="background:var(--e-falou)"></i>Contato feito</span>
+          <span><i class="chave q" style="background:var(--e-negoc)"></i>Em negociação</span>
+          <span><i class="chave q" style="background:var(--e-visita)"></i>Visita showroom</span>
+        </div>
+      </div>
+      <div id="etapa-lista" class="funil"></div>
     </section>
 
     <section id="vendas">
@@ -399,14 +442,19 @@
         <div>
           <h3>Por que taxa baixa nem sempre é falha de atendimento</h3>
           <p>
-            Tennessee Harley-Davidson tem a menor taxa da semana e, ao mesmo tempo, o menor custo
-            por lead da lista. O anúncio de WhatsApp gera muita conversa e nem toda conversa vira
+            Tennessee Harley-Davidson tem a menor taxa da semana e, ao mesmo tempo, um dos menores
+            custos por lead da lista. O anúncio de WhatsApp gera muita conversa e nem toda conversa vira
             um registro no CRM. Volume alto e barato costuma vir acompanhado de taxa de registro
             menor, o que pede leitura junto do custo por lead e não isoladamente.
           </p>
         </div>
       </div>
     </div>
+    <p class="carimbo">
+      Dados do CRM consultados em 1º de outubro de 2026. A situação de cada lead e o faturamento
+      continuam mudando depois que a semana fecha: o vendedor segue atendendo e a nota fiscal entra
+      com atraso. Uma nova consulta desta mesma semana pode trazer outros números no funil e nas vendas.
+    </p>
     <div class="rodape-fim">
       <img src="stroke-black.png" alt="Stroke" width="64" height="16">
       <span>Grupo Germânica · Semana de 21 a 27 de setembro de 2026</span>
@@ -421,19 +469,29 @@
   // Fonte única de verdade. Gráficos, tabela e totais saem daqui.
   // ponytail: dado fixo no arquivo porque o relatório é a foto de uma semana.
   var DADOS = [
-    // agend/pend/perd/vend são os quatro `status` do CRM (scheduled, pending, sale_not_performed,
-    // sale_performed). São exclusivos e somam `crm` em todas as marcas — a barra do funil é o total.
-    // `vendas`/`fat` é OUTRO universo: venda conta pela data de faturamento, não pela semana em que
-    // o lead entrou. Por isso GWM tem vend:2 aqui e 5 vendas faturadas lá embaixo.
-    {marca:"GWM Germânica",           curto:"GWM",             inv:13793.33, midia:221, crm:180, agend:100, pend:45,  perd:33, vend:2, vendas:5, fat:1169995.96},
-    {marca:"Omoda Jaecoo Germânica",  curto:"Omoda Jaecoo",    inv:11594.49, midia:411, crm:327, agend:140, pend:109, perd:78, vend:0, vendas:0, fat:0},
-    {marca:"Germânica Volkswagen",    curto:"Volkswagen",      inv:6679.31,  midia:254, crm:209, agend:145, pend:31,  perd:33, vend:0, vendas:0, fat:0},
-    {marca:"Toyota Nipônica",         curto:"Toyota Nipônica", inv:4738.37,  midia:173, crm:152, agend:106, pend:3,   perd:43, vend:0, vendas:2, fat:558290.00},
-    {marca:"Jeep Germânica",          curto:"Jeep",            inv:4226.98,  midia:291, crm:298, agend:289, pend:3,   perd:6,  vend:0, vendas:1, fat:264951.72, nota:1},
-    {marca:"Germânica Kia",           curto:"Kia",             inv:3036.07,  midia:45,  crm:37,  agend:35,  pend:0,   perd:2,  vend:0, vendas:0, fat:0},
-    {marca:"Germânica RAM",           curto:"RAM",             inv:3011.34,  midia:95,  crm:76,  agend:70,  pend:1,   perd:5,  vend:0, vendas:0, fat:0},
-    {marca:"Escandinávia Volvo",      curto:"Volvo",           inv:2726.67,  midia:62,  crm:74,  agend:48,  pend:1,   perd:25, vend:0, vendas:0, fat:0, nota:1},
-    {marca:"Tennessee Harley-Davidson",curto:"Harley-Davidson",inv:2602.66,  midia:165, crm:112, agend:81,  pend:4,   perd:27, vend:0, vendas:2, fat:252000.00, nota:2}
+    // DOIS EIXOS INDEPENDENTES, cada um fechando o total `crm` da marca:
+    //
+    //   STATUS (onde o lead parou)      agend/pend/perd/vend  = scheduled, pending,
+    //                                   sale_not_performed, sale_performed
+    //   ETAPA (até onde o atendimento   nada/tent/falou/negoc/visita = o ponto MAIS AVANÇADO
+    //   chegou)                         que o lead alcançou, derivado do `motivo` do agendamento
+    //
+    // Não misturar os dois numa barra só. A primeira versão desta página juntou "qualificado"
+    // (que vive no eixo ETAPA) com os status, e 671 leads sumiram do desenho.
+    // "Ponto mais avançado" e não "motivo mais recente": o vendedor registra nova tentativa
+    // depois de já ter falado, e pelo mais recente o lead regredia de etapa.
+    //
+    // `vendas`/`fat` é um TERCEIRO universo: venda conta pela data de faturamento, não pela semana
+    // em que o lead entrou. Por isso Jeep tem vend:3 aqui e 10 vendas faturadas lá embaixo.
+    {marca:"GWM Germânica",           curto:"GWM",             inv:13794.15, midia:221, crm:182, agend:106, pend:23, perd:51, vend:2, nada:33,  tent:139, falou:10, negoc:0, visita:0, vendas:5,  fat:1169995.96},
+    {marca:"Omoda Jaecoo Germânica",  curto:"Omoda Jaecoo",    inv:11595.69, midia:411, crm:329, agend:166, pend:67, perd:96, vend:0, nada:157, tent:111, falou:60, negoc:1, visita:0, vendas:0,  fat:0},
+    {marca:"Germânica Volkswagen",    curto:"Volkswagen",      inv:6680.17,  midia:254, crm:209, agend:134, pend:17, perd:58, vend:0, nada:29,  tent:152, falou:22, negoc:5, visita:1, vendas:0,  fat:0},
+    {marca:"Toyota Nipônica",         curto:"Toyota Nipônica", inv:4739.26,  midia:173, crm:152, agend:82,  pend:3,  perd:67, vend:0, nada:16,  tent:119, falou:15, negoc:2, visita:0, vendas:5,  fat:1120990.00},
+    {marca:"Jeep Germânica",          curto:"Jeep",            inv:4227.20,  midia:291, crm:298, agend:275, pend:2,  perd:18, vend:3, nada:6,   tent:235, falou:56, negoc:1, visita:0, vendas:10, fat:1587851.60, nota:1},
+    {marca:"Germânica Kia",           curto:"Kia",             inv:3036.07,  midia:45,  crm:37,  agend:28,  pend:0,  perd:9,  vend:0, nada:0,   tent:37,  falou:0,  negoc:0, visita:0, vendas:0,  fat:0},
+    {marca:"Germânica RAM",           curto:"RAM",             inv:3011.44,  midia:95,  crm:75,  agend:63,  pend:1,  perd:7,  vend:4, nada:5,   tent:65,  falou:5,  negoc:0, visita:0, vendas:1,  fat:189886.85},
+    {marca:"Escandinávia Volvo",      curto:"Volvo",           inv:2726.75,  midia:62,  crm:74,  agend:38,  pend:0,  perd:36, vend:0, nada:2,   tent:67,  falou:5,  negoc:0, visita:0, vendas:0,  fat:0, nota:1},
+    {marca:"Tennessee Harley-Davidson",curto:"Harley-Davidson",inv:2603.72,  midia:165, crm:112, agend:37,  pend:2,  perd:73, vend:0, nada:7,   tent:49,  falou:56, negoc:0, visita:0, vendas:2,  fat:252000.00, nota:2}
   ];
 
   var fmtInt  = new Intl.NumberFormat("pt-BR");
@@ -530,40 +588,60 @@
   );
 
   /* ── funil depois da entrada ────────────────────────────── */
-  // Se os quatro estados deixarem de somar o total do CRM, a barra vira mentira — e foi
-  // exatamente esse o bug da primeira versão. Falha barulhento em vez de desenhar errado.
-  DADOS.forEach(function(d){
-    if(d.agend + d.pend + d.perd + d.vend !== d.crm){
-      throw new Error("Estados não somam o CRM em " + d.marca);
-    }
-  });
-
   var ESTADOS = [
     {campo:"agend", cor:"--c-agend", rot:"em agendamento"},
     {campo:"pend",  cor:"--c-pend",  rot:"sem atendimento"},
     {campo:"perd",  cor:"--c-perd",  rot:"perdidos"},
     {campo:"vend",  cor:"--c-vend",  rot:"vendidos"}
   ];
+  var ETAPAS = [
+    {campo:"nada",   cor:"--e-nada",   rot:"sem nada registrado"},
+    {campo:"tent",   cor:"--e-tent",   rot:"só com tentativa"},
+    {campo:"falou",  cor:"--e-falou",  rot:"com contato feito"},
+    {campo:"negoc",  cor:"--e-negoc",  rot:"em negociação"},
+    {campo:"visita", cor:"--e-visita", rot:"com visita ao showroom"}
+  ];
+
+  // Se um eixo deixar de somar o total do CRM, a barra vira mentira — foi exatamente esse o bug
+  // da primeira versão. Falha barulhento em vez de desenhar errado. Vale para os dois eixos.
+  DADOS.forEach(function(d){
+    [["status", ESTADOS], ["etapa", ETAPAS]].forEach(function(par){
+      var soma = par[1].reduce(function(a,e){ return a + d[e.campo]; }, 0);
+      if(soma !== d.crm) throw new Error("Eixo " + par[0] + " não soma o CRM em " + d.marca + " (" + soma + " de " + d.crm + ")");
+    });
+  });
+
+  // Mesma escala nas duas faixas: o total do CRM de cada marca tem o mesmo comprimento em cima
+  // e embaixo, então dá para comparar as duas leituras da mesma marca de olho.
   var maxFunil = DADOS.reduce(function(m,d){ return Math.max(m, d.crm); }, 0);
 
-  document.getElementById("funil-lista").innerHTML = DADOS.map(function(d){
-    var rotulo = ESTADOS.map(function(e){ return d[e.campo] + " " + e.rot; }).join(", ");
-    return '<div class="f-linha">' +
-      '<div class="f-marca">' + esc(d.curto) + '</div>' +
-      '<div class="f-barra" role="img" aria-label="' + esc(d.curto + ": " + rotulo) + '">' +
-        ESTADOS.map(function(e){
-          if(!d[e.campo]) return "";
-          return '<i style="width:' + (d[e.campo]/maxFunil*100) + '%;background:var(' + e.cor + ')"></i>';
-        }).join("") +
-      '</div>' +
-      '<div class="f-nums">' +
-        ESTADOS.map(function(e){
-          return '<span class="f-num"><b style="background:var(' + e.cor + ')"></b>' +
-            fmtInt.format(d[e.campo]) + '</span>';
-        }).join("") +
-      '</div>' +
-    '</div>';
-  }).join("");
+  function barras(alvo, eixo, direita){
+    document.getElementById(alvo).innerHTML = DADOS.map(function(d){
+      var rotulo = eixo.map(function(e){ return d[e.campo] + " " + e.rot; }).join(", ");
+      return '<div class="f-linha">' +
+        '<div class="f-marca">' + esc(d.curto) + '</div>' +
+        '<div class="f-barra" role="img" aria-label="' + esc(d.curto + ": " + rotulo) + '">' +
+          eixo.map(function(e){
+            if(!d[e.campo]) return "";
+            return '<i style="width:' + (d[e.campo]/maxFunil*100) + '%;background:var(' + e.cor + ')"></i>';
+          }).join("") +
+        '</div>' +
+        direita(d) +
+      '</div>';
+    }).join("");
+  }
+
+  barras("funil-lista", ESTADOS, function(d){
+    return '<div class="f-nums">' + ESTADOS.map(function(e){
+      return '<span class="f-num"><b style="background:var(' + e.cor + ')"></b>' + fmtInt.format(d[e.campo]) + '</span>';
+    }).join("") + '</div>';
+  });
+
+  function falou(d){ return d.falou + d.negoc + d.visita; }
+  barras("etapa-lista", ETAPAS, function(d){
+    return '<div class="f-pct">' + pct(falou(d) / d.crm * 100) +
+      '<small>' + fmtInt.format(falou(d)) + ' de ' + fmtInt.format(d.crm) + '</small></div>';
+  });
 
   /* ── vendas e faturamento ───────────────────────────────── */
   var comVenda = DADOS.filter(function(d){ return d.vendas > 0; });
