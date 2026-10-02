@@ -640,7 +640,7 @@
   function falou(d){ return d.falou + d.negoc + d.visita; }
   barras("etapa-lista", ETAPAS, function(d){
     return '<div class="f-pct">' + pct(falou(d) / d.crm * 100) +
-      '<small>' + fmtInt.format(falou(d)) + ' de ' + fmtInt.format(d.crm) + '</small></div>';
+      '<small>falou com ' + fmtInt.format(falou(d)) + ' de ' + fmtInt.format(d.crm) + ' leads</small></div>';
   });
 
   /* ── vendas e faturamento ───────────────────────────────── */
