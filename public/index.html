@@ -400,7 +400,7 @@
       <p id="sem-venda" class="apoio sem-venda"></p>
     </section>
 
-    <section id="leitura">
+    <section id="leitura" hidden><!-- texto de exemplo: só tirar o hidden quando o time escrever a leitura da semana -->
       <div class="sec-cab">
         <h2>Leitura da semana</h2>
         <p class="apoio max-leitura">Análise escrita pelo time de mídia da Stroke.</p>
@@ -462,250 +462,268 @@
 (function(){
   "use strict";
 
-  // ── A CADA SEMANA, só este bloco muda ──────────────────────────────────────────────────────
-  // SEMANA: segunda e domingo da semana, e o dia em que os dados foram consultados.
-  // DADOS: cole o JSON que sai de relatorio-germanica/dados_semana.sql (mesmas datas de SEMANA).
-  // O resto da página (gráficos, totais, notas, datas) é montado a partir daqui.
-  var SEMANA = {ini:"2026-10-05", fim:"2026-10-11", consulta:"2026-10-14"};
+  // Os números vêm de /api/dados (Pages Function que lê relatorio_germanica_semanal, tabela
+  // regerada toda segunda — ver power law/sql/2026-10-14-relatorio-germanica-semanal.sql).
+  // A página é a mesma toda semana; só o dado muda. Nada de número colado aqui.
+  //
+  // Formato de cada marca em DADOS — DOIS EIXOS INDEPENDENTES, cada um fechando `crm`:
+  //
+  //   STATUS (onde o lead parou)      agend/pend/perd/vend  = scheduled, pending,
+  //                                   sale_not_performed, sale_performed
+  //   ETAPA (até onde o atendimento   nada/tent/falou/negoc/visita = o ponto MAIS AVANÇADO
+  //   chegou)                         que o lead alcançou, derivado do `motivo` do agendamento
+  //
+  // Não misturar os dois numa barra só. A primeira versão desta página juntou "qualificado"
+  // (que vive no eixo ETAPA) com os status, e 671 leads sumiram do desenho.
+  // "Ponto mais avançado" e não "motivo mais recente": o vendedor registra nova tentativa
+  // depois de já ter falado, e pelo mais recente o lead regredia de etapa.
+  //
+  // `vendas`/`fat` é um TERCEIRO universo: venda conta pela data de faturamento, não pela semana
+  // em que o lead entrou. Uma marca pode ter vend:0 e venda faturada na mesma semana.
+  fetch("api/dados", {cache: "no-cache"})
+    .then(function(r){
+      return r.json().then(function(j){
+        if(!r.ok) throw new Error(j.erro || ("HTTP " + r.status));
+        return j;
+      });
+    })
+    .then(function(j){
+      // gerado_em é timestamp UTC; o carimbo mostra o dia em Brasília.
+      var consulta = new Date(j.gerado_em).toLocaleDateString("sv-SE", {timeZone: "America/Sao_Paulo"});
+      desenhar({ini: j.semana_ini, fim: j.semana_fim, consulta: consulta}, j.dados);
+    })
+    .catch(falha);
 
-  var DADOS = [
-    // DOIS EIXOS INDEPENDENTES, cada um fechando o total `crm` da marca:
-    //
-    //   STATUS (onde o lead parou)      agend/pend/perd/vend  = scheduled, pending,
-    //                                   sale_not_performed, sale_performed
-    //   ETAPA (até onde o atendimento   nada/tent/falou/negoc/visita = o ponto MAIS AVANÇADO
-    //   chegou)                         que o lead alcançou, derivado do `motivo` do agendamento
-    //
-    // Não misturar os dois numa barra só. A primeira versão desta página juntou "qualificado"
-    // (que vive no eixo ETAPA) com os status, e 671 leads sumiram do desenho.
-    // "Ponto mais avançado" e não "motivo mais recente": o vendedor registra nova tentativa
-    // depois de já ter falado, e pelo mais recente o lead regredia de etapa.
-    //
-    // `vendas`/`fat` é um TERCEIRO universo: venda conta pela data de faturamento, não pela semana
-    // em que o lead entrou. Uma marca pode ter vend:0 aqui e venda faturada lá embaixo.
-    {marca:"GWM Germânica",            curto:"GWM",             inv:14779.22, midia:267, crm:226, agend:142, pend:63, perd:21, vend:0, nada:68, tent:140, falou:15, negoc:1, visita:2, vendas:1, fat:225000.00},
-    {marca:"Germânica Volkswagen",     curto:"Volkswagen",      inv:7930.62,  midia:340, crm:266, agend:182, pend:21, perd:63, vend:0, nada:23, tent:195, falou:42, negoc:5, visita:1, vendas:1, fat:107400.00},
-    {marca:"Germânica BMW",            curto:"BMW",             inv:5560.18,  midia:43,  crm:33,  agend:21,  pend:0,  perd:12, vend:0, nada:0,  tent:27,  falou:5,  negoc:0, visita:1, vendas:0, fat:0},
-    {marca:"Jeep Germânica",           curto:"Jeep",            inv:3774.33,  midia:124, crm:132, agend:125, pend:3,  perd:4,  vend:0, nada:2,  tent:105, falou:25, negoc:0, visita:0, vendas:0, fat:0},
-    {marca:"Toyota Nipônica",          curto:"Toyota Nipônica", inv:3763.99,  midia:133, crm:125, agend:74,  pend:3,  perd:48, vend:0, nada:13, tent:102, falou:9,  negoc:1, visita:0, vendas:0, fat:0},
-    {marca:"Tennessee Harley-Davidson",curto:"Harley-Davidson", inv:3576.58,  midia:255, crm:126, agend:72,  pend:1,  perd:53, vend:0, nada:4,  tent:96,  falou:25, negoc:0, visita:1, vendas:0, fat:0},
-    {marca:"Germânica Kia",            curto:"Kia",             inv:3569.85,  midia:61,  crm:56,  agend:40,  pend:0,  perd:16, vend:0, nada:2,  tent:54,  falou:0,  negoc:0, visita:0, vendas:0, fat:0},
-    {marca:"Germânica MINI",           curto:"MINI",            inv:3120.34,  midia:54,  crm:45,  agend:23,  pend:0,  perd:22, vend:0, nada:4,  tent:41,  falou:0,  negoc:0, visita:0, vendas:0, fat:0},
-    {marca:"Germânica RAM",            curto:"RAM",             inv:3031.10,  midia:105, crm:89,  agend:84,  pend:0,  perd:5,  vend:0, nada:3,  tent:79,  falou:6,  negoc:1, visita:0, vendas:0, fat:0},
-    {marca:"Escandinávia Volvo",       curto:"Volvo",           inv:3001.86,  midia:92,  crm:90,  agend:72,  pend:0,  perd:18, vend:0, nada:0,  tent:89,  falou:1,  negoc:0, visita:0, vendas:0, fat:0},
-    {marca:"Omoda Jaecoo Germânica",   curto:"Omoda Jaecoo",    inv:2729.92,  midia:146, crm:128, agend:63,  pend:46, perd:19, vend:0, nada:62, tent:45,  falou:21, negoc:0, visita:0, vendas:0, fat:0},
-    {marca:"Germânica BMW Motorrad",   curto:"BMW Motorrad",    inv:2382.08,  midia:85,  crm:70,  agend:50,  pend:0,  perd:20, vend:0, nada:1,  tent:68,  falou:0,  negoc:0, visita:1, vendas:0, fat:0}
-  ];
-  // ── fim do bloco semanal ───────────────────────────────────────────────────────────────────
+  // Sem dado, a página diz isso em vez de ficar em branco ou mostrar número velho.
+  function falha(e){
+    var aviso = document.createElement("p");
+    aviso.className = "sem-js";
+    aviso.textContent = "Não foi possível carregar os números desta semana (" + e.message + "). " +
+      "Avise a Stroke.";
+    var alvo = document.getElementById("totais");
+    alvo.parentNode.insertBefore(aviso, alvo);
+    alvo.hidden = true;
+    document.querySelector("main").hidden = true;
+  }
 
-  // Notas do rodapé: 1 = passou de 100% (calculado), 2 = Harley (WhatsApp, sempre).
-  DADOS.forEach(function(d){
-    if(d.crm > d.midia) d.nota = 1;
-    else if(d.curto === "Harley-Davidson") d.nota = 2;
-  });
+  function desenhar(SEMANA, DADOS){
 
-  var fmtInt  = new Intl.NumberFormat("pt-BR");
-  var fmtBRL  = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2});
-  var fmtBRL0 = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:0,maximumFractionDigits:0});
-  var fmtPct  = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+    // Marca sem nada na semana (campanha pausada, marca recém-entrada) sai da página: a linha
+    // vazia viraria 0/0 = "NaN%" na frente do cliente.
+    DADOS = DADOS.filter(function(d){ return d.inv || d.midia || d.crm || d.vendas; });
 
-  function pct(v){ return fmtPct.format(v) + "%"; }
-  function taxa(d){ return d.crm / d.midia * 100; }
-  function cpl(d){ return d.inv / d.midia; }
-  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-  function soma(campo){ return DADOS.reduce(function(a,d){ return a + d[campo]; },0); }
+    var ESTADOS = [
+      {campo:"agend", cor:"--c-agend", rot:"em agendamento"},
+      {campo:"pend",  cor:"--c-pend",  rot:"sem atendimento"},
+      {campo:"perd",  cor:"--c-perd",  rot:"perdidos"},
+      {campo:"vend",  cor:"--c-vend",  rot:"vendidos"}
+    ];
+    var ETAPAS = [
+      {campo:"nada",   cor:"--e-nada",   rot:"sem nada registrado"},
+      {campo:"tent",   cor:"--e-tent",   rot:"só com tentativa"},
+      {campo:"falou",  cor:"--e-falou",  rot:"com contato feito"},
+      {campo:"negoc",  cor:"--e-negoc",  rot:"em negociação"},
+      {campo:"visita", cor:"--e-visita", rot:"com visita ao showroom"}
+    ];
 
-  var T = {
-    inv:soma("inv"), midia:soma("midia"), crm:soma("crm"),
-    agend:soma("agend"), pend:soma("pend"), perd:soma("perd"), vend:soma("vend"),
-    vendas:soma("vendas"), fat:soma("fat")
-  };
-
-  /* ── totais da semana ───────────────────────────────────── */
-  var kpis = [
-    {rot:"Investimento",    val:fmtBRL.format(T.inv),  nota:"Mídia paga nas " + DADOS.length + " marcas"},
-    {rot:"Gerados na mídia",val:fmtInt.format(T.midia),nota:"Leads entregues pelas plataformas de anúncio"},
-    {rot:"Leads no CRM",    val:fmtInt.format(T.crm),  nota:"Viraram registro no CRM da concessionária"},
-    {rot:"Chegou ao CRM",   val:pct(T.crm/T.midia*100),nota:"Leads no CRM dividido por gerados na mídia", destaque:true},
-    {rot:"Vendas faturadas",val:fmtInt.format(T.vendas),nota:"Contadas pela data do faturamento"},
-    {rot:"Faturamento",     val:fmtBRL0.format(T.fat), nota:"Soma das vendas faturadas na semana"}
-  ];
-  document.getElementById("totais").innerHTML = kpis.map(function(k){
-    return '<div class="kpi' + (k.destaque ? " destaque" : "") + '">' +
-      '<div class="rot">' + esc(k.rot) + '</div>' +
-      '<div class="val">' + esc(k.val) + '</div>' +
-      '<div class="nota">' + esc(k.nota) + '</div>' +
-    '</div>';
-  }).join("");
-
-  /* ── gráfico halter: mídia → CRM ────────────────────────── */
-  // Escala sai do maior valor da semana, arredondado pra cima na centena, com folga de 5%
-  // pro ponto não encostar na borda.
-  var maior = DADOS.reduce(function(m,d){ return Math.max(m, d.midia, d.crm); }, 0);
-  var topo = Math.max(100, Math.ceil(maior / 100) * 100);
-  var TICKS = [];
-  for(var t = 0; t <= topo; t += topo > 500 ? 200 : 100) TICKS.push(t);
-  var ESCALA = Math.max(topo, maior * 1.05);
-
-  function posicao(v){ return (v / ESCALA) * 100; }
-
-  var grade = TICKS.map(function(t){
-    return '<i style="left:' + posicao(t) + '%"></i>';
-  }).join("");
-
-  document.getElementById("halter").innerHTML =
-    DADOS.map(function(d){
-      var a = posicao(Math.min(d.midia, d.crm));
-      var b = posicao(Math.max(d.midia, d.crm));
-      var ref = d.nota ? '<sup>' + d.nota + '</sup>' : "";
-      return '<div class="h-linha">' +
-        '<div class="h-marca">' + esc(d.curto) + '</div>' +
-        '<div class="h-trilho" role="img" aria-label="' +
-            esc(d.curto + ": " + d.midia + " leads gerados na mídia, " + d.crm +
-                " registrados no CRM, " + pct(taxa(d)) + " de chegada") + '">' +
-          '<div class="h-grade" aria-hidden="true">' + grade + '</div>' +
-          '<div class="h-conector" style="left:' + a + '%;width:' + (b-a) + '%"></div>' +
-          '<div class="h-pt midia" style="left:' + posicao(d.midia) + '%" title="Gerados na mídia: ' + d.midia + '"></div>' +
-          '<div class="h-pt crm" style="left:' + posicao(d.crm) + '%" title="Registrados no CRM: ' + d.crm + '"></div>' +
-        '</div>' +
-        '<div class="h-taxa">' + pct(taxa(d)) + ref + '</div>' +
-      '</div>';
-    }).join("") +
-    '<div class="h-eixo" aria-hidden="true"><div></div><div class="h-eixo-marcas">' +
-      TICKS.map(function(t){ return '<i style="left:' + posicao(t) + '%">' + fmtInt.format(t) + '</i>'; }).join("") +
-    '</div><div></div></div>';
-
-  /* ── tabela exata ───────────────────────────────────────── */
-  var colunas = ["Marca","Investimento","Custo por lead","Gerados na mídia","Leads no CRM","Chegou ao CRM"];
-  document.getElementById("tabela-midia").insertAdjacentHTML("beforeend",
-    '<thead><tr>' + colunas.map(function(c){
-      return '<th scope="col">' + esc(c) + '</th>';
-    }).join("") + '</tr></thead>' +
-    '<tbody>' + DADOS.map(function(d){
-      var ref = d.nota ? '<sup class="ref">' + d.nota + '</sup>' : "";
-      return '<tr>' +
-        '<th scope="row" style="font-family:var(--sans);font-weight:400;font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">' + esc(d.marca) + '</th>' +
-        '<td>' + fmtBRL.format(d.inv) + '</td>' +
-        '<td>' + fmtBRL.format(cpl(d)) + '</td>' +
-        '<td>' + fmtInt.format(d.midia) + '</td>' +
-        '<td>' + fmtInt.format(d.crm) + '</td>' +
-        '<td>' + pct(taxa(d)) + ref + '</td>' +
-      '</tr>';
-    }).join("") + '</tbody>' +
-    '<tfoot><tr>' +
-      '<td>Total</td>' +
-      '<td>' + fmtBRL.format(T.inv) + '</td>' +
-      '<td>' + fmtBRL.format(T.inv/T.midia) + '</td>' +
-      '<td>' + fmtInt.format(T.midia) + '</td>' +
-      '<td>' + fmtInt.format(T.crm) + '</td>' +
-      '<td>' + pct(T.crm/T.midia*100) + '</td>' +
-    '</tr></tfoot>'
-  );
-
-  /* ── funil depois da entrada ────────────────────────────── */
-  var ESTADOS = [
-    {campo:"agend", cor:"--c-agend", rot:"em agendamento"},
-    {campo:"pend",  cor:"--c-pend",  rot:"sem atendimento"},
-    {campo:"perd",  cor:"--c-perd",  rot:"perdidos"},
-    {campo:"vend",  cor:"--c-vend",  rot:"vendidos"}
-  ];
-  var ETAPAS = [
-    {campo:"nada",   cor:"--e-nada",   rot:"sem nada registrado"},
-    {campo:"tent",   cor:"--e-tent",   rot:"só com tentativa"},
-    {campo:"falou",  cor:"--e-falou",  rot:"com contato feito"},
-    {campo:"negoc",  cor:"--e-negoc",  rot:"em negociação"},
-    {campo:"visita", cor:"--e-visita", rot:"com visita ao showroom"}
-  ];
-
-  // Se um eixo deixar de somar o total do CRM, a barra vira mentira — foi exatamente esse o bug
-  // da primeira versão. Falha barulhento em vez de desenhar errado. Vale para os dois eixos.
-  DADOS.forEach(function(d){
-    [["status", ESTADOS], ["etapa", ETAPAS]].forEach(function(par){
-      var soma = par[1].reduce(function(a,e){ return a + d[e.campo]; }, 0);
-      if(soma !== d.crm) throw new Error("Eixo " + par[0] + " não soma o CRM em " + d.marca + " (" + soma + " de " + d.crm + ")");
+    // Se um eixo deixar de somar o total do CRM, a barra vira mentira — foi exatamente esse o bug
+    // da primeira versão. Confere ANTES de desenhar qualquer coisa: falhando no meio, o cliente
+    // via os totais em cima e o aviso de erro embaixo.
+    DADOS.forEach(function(d){
+      [["status", ESTADOS], ["etapa", ETAPAS]].forEach(function(par){
+        var soma = par[1].reduce(function(a,e){ return a + d[e.campo]; }, 0);
+        if(soma !== d.crm) throw new Error("Eixo " + par[0] + " não soma o CRM em " + d.marca + " (" + soma + " de " + d.crm + ")");
+      });
     });
-  });
 
-  // Mesma escala nas duas faixas: o total do CRM de cada marca tem o mesmo comprimento em cima
-  // e embaixo, então dá para comparar as duas leituras da mesma marca de olho.
-  var maxFunil = DADOS.reduce(function(m,d){ return Math.max(m, d.crm); }, 0);
+    // Notas do rodapé: 1 = passou de 100% (calculado), 2 = Harley (WhatsApp, sempre).
+    DADOS.forEach(function(d){
+      if(d.crm > d.midia) d.nota = 1;
+      else if(d.curto === "Harley-Davidson") d.nota = 2;
+    });
 
-  function barras(alvo, eixo, direita){
-    document.getElementById(alvo).innerHTML = DADOS.map(function(d){
-      var rotulo = eixo.map(function(e){ return d[e.campo] + " " + e.rot; }).join(", ");
-      return '<div class="f-linha">' +
-        '<div class="f-marca">' + esc(d.curto) + '</div>' +
-        '<div class="f-barra" role="img" aria-label="' + esc(d.curto + ": " + rotulo) + '">' +
-          eixo.map(function(e){
-            if(!d[e.campo]) return "";
-            return '<i style="width:' + (d[e.campo]/maxFunil*100) + '%;background:var(' + e.cor + ')"></i>';
-          }).join("") +
-        '</div>' +
-        direita(d) +
+    var fmtInt  = new Intl.NumberFormat("pt-BR");
+    var fmtBRL  = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2});
+    var fmtBRL0 = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:0,maximumFractionDigits:0});
+    var fmtPct  = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+
+    // Divisão por zero (marca com CRM e sem lead de mídia, ou o contrário) vira "—", não "∞%".
+    function pct(v){ return isFinite(v) ? fmtPct.format(v) + "%" : "—"; }
+    function brl(v){ return isFinite(v) ? fmtBRL.format(v) : "—"; }
+    function taxa(d){ return d.crm / d.midia * 100; }
+    function cpl(d){ return d.inv / d.midia; }
+    function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+    function soma(campo){ return DADOS.reduce(function(a,d){ return a + d[campo]; },0); }
+
+    var T = {
+      inv:soma("inv"), midia:soma("midia"), crm:soma("crm"),
+      agend:soma("agend"), pend:soma("pend"), perd:soma("perd"), vend:soma("vend"),
+      vendas:soma("vendas"), fat:soma("fat")
+    };
+
+    /* ── totais da semana ───────────────────────────────────── */
+    var kpis = [
+      {rot:"Investimento",    val:fmtBRL.format(T.inv),  nota:"Mídia paga nas " + DADOS.length + " marcas"},
+      {rot:"Gerados na mídia",val:fmtInt.format(T.midia),nota:"Leads entregues pelas plataformas de anúncio"},
+      {rot:"Leads no CRM",    val:fmtInt.format(T.crm),  nota:"Viraram registro no CRM da concessionária"},
+      {rot:"Chegou ao CRM",   val:pct(T.crm/T.midia*100),nota:"Leads no CRM dividido por gerados na mídia", destaque:true},
+      {rot:"Vendas faturadas",val:fmtInt.format(T.vendas),nota:"Contadas pela data do faturamento"},
+      {rot:"Faturamento",     val:fmtBRL0.format(T.fat), nota:"Soma das vendas faturadas na semana"}
+    ];
+    document.getElementById("totais").innerHTML = kpis.map(function(k){
+      return '<div class="kpi' + (k.destaque ? " destaque" : "") + '">' +
+        '<div class="rot">' + esc(k.rot) + '</div>' +
+        '<div class="val">' + esc(k.val) + '</div>' +
+        '<div class="nota">' + esc(k.nota) + '</div>' +
       '</div>';
     }).join("");
+
+    /* ── gráfico halter: mídia → CRM ────────────────────────── */
+    // Escala sai do maior valor da semana, arredondado pra cima na centena, com folga de 5%
+    // pro ponto não encostar na borda.
+    var maior = DADOS.reduce(function(m,d){ return Math.max(m, d.midia, d.crm); }, 0);
+    var topo = Math.max(100, Math.ceil(maior / 100) * 100);
+    var TICKS = [];
+    for(var t = 0; t <= topo; t += topo > 500 ? 200 : 100) TICKS.push(t);
+    var ESCALA = Math.max(topo, maior * 1.05);
+
+    function posicao(v){ return (v / ESCALA) * 100; }
+
+    var grade = TICKS.map(function(t){
+      return '<i style="left:' + posicao(t) + '%"></i>';
+    }).join("");
+
+    document.getElementById("halter").innerHTML =
+      DADOS.map(function(d){
+        var a = posicao(Math.min(d.midia, d.crm));
+        var b = posicao(Math.max(d.midia, d.crm));
+        var ref = d.nota ? '<sup>' + d.nota + '</sup>' : "";
+        return '<div class="h-linha">' +
+          '<div class="h-marca">' + esc(d.curto) + '</div>' +
+          '<div class="h-trilho" role="img" aria-label="' +
+              esc(d.curto + ": " + d.midia + " leads gerados na mídia, " + d.crm +
+                  " registrados no CRM, " + pct(taxa(d)) + " de chegada") + '">' +
+            '<div class="h-grade" aria-hidden="true">' + grade + '</div>' +
+            '<div class="h-conector" style="left:' + a + '%;width:' + (b-a) + '%"></div>' +
+            '<div class="h-pt midia" style="left:' + posicao(d.midia) + '%" title="Gerados na mídia: ' + d.midia + '"></div>' +
+            '<div class="h-pt crm" style="left:' + posicao(d.crm) + '%" title="Registrados no CRM: ' + d.crm + '"></div>' +
+          '</div>' +
+          '<div class="h-taxa">' + pct(taxa(d)) + ref + '</div>' +
+        '</div>';
+      }).join("") +
+      '<div class="h-eixo" aria-hidden="true"><div></div><div class="h-eixo-marcas">' +
+        TICKS.map(function(t){ return '<i style="left:' + posicao(t) + '%">' + fmtInt.format(t) + '</i>'; }).join("") +
+      '</div><div></div></div>';
+
+    /* ── tabela exata ───────────────────────────────────────── */
+    var colunas = ["Marca","Investimento","Custo por lead","Gerados na mídia","Leads no CRM","Chegou ao CRM"];
+    document.getElementById("tabela-midia").insertAdjacentHTML("beforeend",
+      '<thead><tr>' + colunas.map(function(c){
+        return '<th scope="col">' + esc(c) + '</th>';
+      }).join("") + '</tr></thead>' +
+      '<tbody>' + DADOS.map(function(d){
+        var ref = d.nota ? '<sup class="ref">' + d.nota + '</sup>' : "";
+        return '<tr>' +
+          '<th scope="row" style="font-family:var(--sans);font-weight:400;font-size:14px;color:var(--ink);text-transform:none;letter-spacing:0">' + esc(d.marca) + '</th>' +
+          '<td>' + fmtBRL.format(d.inv) + '</td>' +
+          '<td>' + brl(cpl(d)) + '</td>' +
+          '<td>' + fmtInt.format(d.midia) + '</td>' +
+          '<td>' + fmtInt.format(d.crm) + '</td>' +
+          '<td>' + pct(taxa(d)) + ref + '</td>' +
+        '</tr>';
+      }).join("") + '</tbody>' +
+      '<tfoot><tr>' +
+        '<td>Total</td>' +
+        '<td>' + fmtBRL.format(T.inv) + '</td>' +
+        '<td>' + brl(T.inv/T.midia) + '</td>' +
+        '<td>' + fmtInt.format(T.midia) + '</td>' +
+        '<td>' + fmtInt.format(T.crm) + '</td>' +
+        '<td>' + pct(T.crm/T.midia*100) + '</td>' +
+      '</tr></tfoot>'
+    );
+
+    /* ── funil depois da entrada ────────────────────────────── */
+    // Mesma escala nas duas faixas: o total do CRM de cada marca tem o mesmo comprimento em cima
+    // e embaixo, então dá para comparar as duas leituras da mesma marca de olho.
+    var maxFunil = DADOS.reduce(function(m,d){ return Math.max(m, d.crm); }, 0);
+
+    function barras(alvo, eixo, direita){
+      document.getElementById(alvo).innerHTML = DADOS.map(function(d){
+        var rotulo = eixo.map(function(e){ return d[e.campo] + " " + e.rot; }).join(", ");
+        return '<div class="f-linha">' +
+          '<div class="f-marca">' + esc(d.curto) + '</div>' +
+          '<div class="f-barra" role="img" aria-label="' + esc(d.curto + ": " + rotulo) + '">' +
+            eixo.map(function(e){
+              if(!d[e.campo]) return "";
+              return '<i style="width:' + (d[e.campo]/maxFunil*100) + '%;background:var(' + e.cor + ')"></i>';
+            }).join("") +
+          '</div>' +
+          direita(d) +
+        '</div>';
+      }).join("");
+    }
+
+    barras("funil-lista", ESTADOS, function(d){
+      return '<div class="f-nums">' + ESTADOS.map(function(e){
+        return '<span class="f-num"><b style="background:var(' + e.cor + ')"></b>' + fmtInt.format(d[e.campo]) + '</span>';
+      }).join("") + '</div>';
+    });
+
+    function falou(d){ return d.falou + d.negoc + d.visita; }
+    barras("etapa-lista", ETAPAS, function(d){
+      return '<div class="f-pct">' + pct(falou(d) / d.crm * 100) +
+        '<small>falou com ' + fmtInt.format(falou(d)) + ' de ' + fmtInt.format(d.crm) + ' leads</small></div>';
+    });
+
+    /* ── vendas e faturamento ───────────────────────────────── */
+    var comVenda = DADOS.filter(function(d){ return d.vendas > 0; });
+    var semVenda = DADOS.filter(function(d){ return d.vendas === 0; });
+
+    document.getElementById("vendas-lista").innerHTML = comVenda.map(function(d){
+      return '<div class="v-item">' +
+        '<div class="v-marca">' + esc(d.marca) + '</div>' +
+        '<div class="v-fat">' + fmtBRL0.format(d.fat) + '</div>' +
+        '<div class="v-qtd"><span class="mono">' + d.vendas + '</span> ' +
+          (d.vendas === 1 ? "venda faturada" : "vendas faturadas") + '</div>' +
+      '</div>';
+    }).join("");
+
+    /* ── textos que dependem da semana ──────────────────────── */
+    var MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto",
+                 "setembro","outubro","novembro","dezembro"];
+    function data(iso){ var p = iso.split("-"); return {d:+p[2], m:+p[1], a:+p[0]}; }
+    function dd(n){ return (n < 10 ? "0" : "") + n; }
+    function extenso(x){ return (x.d === 1 ? "1º" : x.d) + " de " + MESES[x.m-1] + " de " + x.a; }
+    // "5 a 11 de outubro de 2026" ou, virando o mês, "28 de setembro a 4 de outubro de 2026"
+    function intervalo(i, f){
+      return i.m === f.m ? i.d + " a " + extenso(f) : i.d + " de " + MESES[i.m-1] + " a " + extenso(f);
+    }
+    // "A", "A e B", "A, B e C"
+    function lista(n){ return n.length < 2 ? n.join("") : n.slice(0,-1).join(", ") + " e " + n[n.length-1]; }
+
+    var ini = data(SEMANA.ini), fim = data(SEMANA.fim);
+    document.getElementById("periodo").textContent =
+      dd(ini.d) + "/" + dd(ini.m) + " a " + dd(fim.d) + "/" + dd(fim.m) + " de " + fim.a;
+    document.getElementById("rodape-semana").textContent =
+      "Grupo Germânica · Semana de " + intervalo(ini, fim);
+
+    var nomes = semVenda.map(function(d){ return d.curto; });
+    var semVendaEl = document.getElementById("sem-venda");
+    if(!nomes.length) semVendaEl.hidden = true;
+    else semVendaEl.textContent = lista(nomes) + (nomes.length === 1 ? " não teve" : " não tiveram") +
+      " venda faturada de " + intervalo(ini, fim).replace(/ de \d{4}$/, "") + ".";
+
+    var acima = DADOS.filter(function(d){ return d.crm > d.midia; }).map(function(d){ return d.curto; });
+    document.getElementById("nota-100").textContent = acima.length
+      ? lista(acima) + (acima.length === 1 ? " registrou" : " registraram") + " no CRM mais leads do que a mídia contou."
+      : "Nesta semana nenhuma marca passou de 100%, mas acontece.";
+
+    document.getElementById("carimbo").textContent =
+      "Dados do CRM consultados em " + extenso(data(SEMANA.consulta)) + ". A situação de cada lead e " +
+      "o faturamento continuam mudando depois que a semana fecha: o vendedor segue atendendo e a nota " +
+      "fiscal entra com atraso. Uma nova consulta desta mesma semana pode trazer outros números no " +
+      "funil e nas vendas.";
   }
-
-  barras("funil-lista", ESTADOS, function(d){
-    return '<div class="f-nums">' + ESTADOS.map(function(e){
-      return '<span class="f-num"><b style="background:var(' + e.cor + ')"></b>' + fmtInt.format(d[e.campo]) + '</span>';
-    }).join("") + '</div>';
-  });
-
-  function falou(d){ return d.falou + d.negoc + d.visita; }
-  barras("etapa-lista", ETAPAS, function(d){
-    return '<div class="f-pct">' + pct(falou(d) / d.crm * 100) +
-      '<small>falou com ' + fmtInt.format(falou(d)) + ' de ' + fmtInt.format(d.crm) + ' leads</small></div>';
-  });
-
-  /* ── vendas e faturamento ───────────────────────────────── */
-  var comVenda = DADOS.filter(function(d){ return d.vendas > 0; });
-  var semVenda = DADOS.filter(function(d){ return d.vendas === 0; });
-
-  document.getElementById("vendas-lista").innerHTML = comVenda.map(function(d){
-    return '<div class="v-item">' +
-      '<div class="v-marca">' + esc(d.marca) + '</div>' +
-      '<div class="v-fat">' + fmtBRL0.format(d.fat) + '</div>' +
-      '<div class="v-qtd"><span class="mono">' + d.vendas + '</span> ' +
-        (d.vendas === 1 ? "venda faturada" : "vendas faturadas") + '</div>' +
-    '</div>';
-  }).join("");
-
-  /* ── textos que dependem da semana ──────────────────────── */
-  var MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto",
-               "setembro","outubro","novembro","dezembro"];
-  function data(iso){ var p = iso.split("-"); return {d:+p[2], m:+p[1], a:+p[0]}; }
-  function dd(n){ return (n < 10 ? "0" : "") + n; }
-  function extenso(x){ return (x.d === 1 ? "1º" : x.d) + " de " + MESES[x.m-1] + " de " + x.a; }
-  // "5 a 11 de outubro de 2026" ou, virando o mês, "28 de setembro a 4 de outubro de 2026"
-  function intervalo(i, f){
-    return i.m === f.m ? i.d + " a " + extenso(f) : i.d + " de " + MESES[i.m-1] + " a " + extenso(f);
-  }
-  // "A", "A e B", "A, B e C"
-  function lista(n){ return n.length < 2 ? n.join("") : n.slice(0,-1).join(", ") + " e " + n[n.length-1]; }
-
-  var ini = data(SEMANA.ini), fim = data(SEMANA.fim);
-  document.getElementById("periodo").textContent =
-    dd(ini.d) + "/" + dd(ini.m) + " a " + dd(fim.d) + "/" + dd(fim.m) + " de " + fim.a;
-  document.getElementById("rodape-semana").textContent =
-    "Grupo Germânica · Semana de " + intervalo(ini, fim);
-
-  var nomes = semVenda.map(function(d){ return d.curto; });
-  var semVendaEl = document.getElementById("sem-venda");
-  if(!nomes.length) semVendaEl.hidden = true;
-  else semVendaEl.textContent = lista(nomes) + (nomes.length === 1 ? " não teve" : " não tiveram") +
-    " venda faturada de " + intervalo(ini, fim).replace(/ de \d{4}$/, "") + ".";
-
-  var acima = DADOS.filter(function(d){ return d.crm > d.midia; }).map(function(d){ return d.curto; });
-  document.getElementById("nota-100").textContent = acima.length
-    ? lista(acima) + (acima.length === 1 ? " registrou" : " registraram") + " no CRM mais leads do que a mídia contou."
-    : "Nesta semana nenhuma marca passou de 100%, mas acontece.";
-
-  document.getElementById("carimbo").textContent =
-    "Dados do CRM consultados em " + extenso(data(SEMANA.consulta)) + ". A situação de cada lead e " +
-    "o faturamento continuam mudando depois que a semana fecha: o vendedor segue atendendo e a nota " +
-    "fiscal entra com atraso. Uma nova consulta desta mesma semana pode trazer outros números no " +
-    "funil e nas vendas.";
 })();
 </script>
 </body>
