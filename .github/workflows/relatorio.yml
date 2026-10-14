@@ -1,0 +1,74 @@
+# Publica o relatório no GitHub Pages com a semana mais recente.
+#
+# PROVISÓRIO até o Cloudflare da empresa entrar no ar (lá a Function functions/dados.json.js
+# lê o banco ao vivo e este workflow deixa de ser necessário: desligar e apagar os secrets).
+#
+# 1. Pede ao Supabase pra gerar a última semana fechada (relatorio_germanica_gerar, idempotente).
+# 2. Baixa a linha mais recente como public/dados.json.
+# 3. Publica public/ no GitHub Pages. O dados.json nunca vai pro repositório, só pro site.
+#
+# Se a geração falhar (semana sem lead, eixo que não fecha, banco fora), o job para antes de
+# publicar: o site fica com a semana anterior e o GitHub manda e-mail de falha.
+#
+# Secrets do repositório (Settings > Secrets and variables > Actions):
+#   SUPABASE_URL                https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY   service role. Só roda em schedule/dispatch/push na main, nunca
+#                               em pull request de fork, então não sai do repositório.
+#
+# Settings > Pages > Source precisa estar em "GitHub Actions".
+
+name: Relatório semanal
+
+on:
+  schedule:
+    - cron: "0 10 * * 1"     # segunda 07:00 em Brasília (o cron do GitHub é UTC e pode atrasar)
+  workflow_dispatch:          # botão "Run workflow" pra regerar na mão
+  push:
+    branches: [main]          # mudança no código da página publica na hora
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      CHAVE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gerar a última semana fechada
+        # Leva ~1 min. Em push só republica o que já existe: a geração é trabalho de segunda.
+        if: github.event_name != 'push'
+        run: |
+          curl --fail-with-body -sS -m 300 -X POST "$SUPABASE_URL/rest/v1/rpc/relatorio_germanica_gerar" \
+            -H "apikey: $CHAVE" -H "Authorization: Bearer $CHAVE" \
+            -H "Content-Type: application/json" -d '{}'
+
+      - name: Baixar a semana mais recente
+        run: |
+          curl --fail-with-body -sS -m 60 \
+            "$SUPABASE_URL/rest/v1/relatorio_germanica_semanal?select=semana_ini,semana_fim,gerado_em,dados&order=semana_ini.desc&limit=1" \
+            -H "apikey: $CHAVE" -H "Authorization: Bearer $CHAVE" \
+            -H "Accept: application/vnd.pgrst.object+json" \
+            -o public/dados.json
+          # Mesmo formato que a Function do Cloudflare devolve; para aqui se vier vazio ou quebrado.
+          jq -e '.semana_ini and (.dados | length > 0)' public/dados.json
+          jq -r '"Publicando semana \(.semana_ini) a \(.semana_fim), gerada em \(.gerado_em)"' public/dados.json
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deploy
+        uses: actions/deploy-pages@v4

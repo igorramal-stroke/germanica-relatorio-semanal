@@ -1,2 +1,4 @@
 .wrangler/
 .dev.vars
+# gerado pelo GitHub Actions a cada publicação; nunca no repositório
+public/dados.json

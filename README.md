@@ -1,23 +1,31 @@
 # Relatório semanal · Grupo Germânica
 
-Página que o cliente abre toda segunda: mídia Meta × CRM, marca a marca. Cloudflare Pages
-(conta da empresa) + uma Pages Function que lê o Supabase.
+Página que o cliente abre toda segunda: mídia Meta × CRM, marca a marca.
 
 ```
-public/            o que vai pro ar (index.html + logo). Só esta pasta é publicada.
-functions/api/     /api/dados: lê a semana mais recente com a service role
+public/                        o que vai pro ar (index.html + logo). Só esta pasta é publicada.
+functions/dados.json.js        Cloudflare: /dados.json lê a semana mais recente com a service role
+.github/workflows/relatorio.yml  GitHub Pages (PROVISÓRIO): gera e publica /dados.json toda segunda
 ```
+
+A página sempre busca `dados.json`. No Cloudflare quem responde é a Function, ao vivo; no
+GitHub Pages é um arquivo estático que o Actions grava a cada publicação. Mesmo formato.
 
 ## Como se atualiza sozinho
 
-1. **Segunda, 6h** — o acionador do Apps Script da planilha semanal
-   (`docs/apps-script/germanica-planilha-semanal.gs`, função `preencherSemanaPassada`) preenche
-   a planilha e chama `relatorio_germanica_gerar()` no Supabase.
-2. A função calcula a última semana fechada e grava uma linha em `relatorio_germanica_semanal`.
-   Ela se recusa a gravar semana sem lead nenhum (coleta parada) ou em que os eixos do funil
-   não fecham o total do CRM; aí o acionador falha e o Google manda e-mail.
-3. A página chama `/api/dados`, que devolve a linha mais recente. Não precisa publicar de novo:
-   muda o dado, a página é a mesma.
+1. A função `relatorio_germanica_gerar()` do Supabase calcula a última semana fechada e grava
+   uma linha em `relatorio_germanica_semanal`. Ela se recusa a gravar semana sem lead nenhum
+   (coleta parada), semana em andamento ou semana em que os eixos do funil não fecham o CRM.
+2. Quem chama a função toda segunda:
+   - **Hoje (GitHub Pages):** o workflow `relatorio.yml`, segunda 7h de Brasília. Gera, baixa e
+     publica. Se a geração falhar, não publica e o GitHub manda e-mail.
+   - **Também:** o acionador de segunda 6h do Apps Script da planilha semanal
+     (`docs/apps-script/germanica-planilha-semanal.gs`), quando o código novo for colado lá.
+     Rodar duas vezes não estraga nada: a função sobrescreve a semana.
+3. Regerar na mão pelo GitHub: aba Actions > Relatório semanal > Run workflow.
+
+Ao passar pro Cloudflare: desligar o workflow e apagar os secrets do GitHub. Aí só o Apps Script
+gera, e a Function serve o dado ao vivo sem precisar publicar de novo.
 
 SQL da tabela e da função: `power law/sql/2026-10-14-relatorio-germanica-semanal.sql`.
 
@@ -30,6 +38,10 @@ select relatorio_germanica_gerar('2026-10-05');   -- segunda da semana
 Leva cerca de 1 minuto. Sobrescreve a semana com o número do momento.
 
 ## Publicar mudança na página (não é toda semana, só quando o código muda)
+
+GitHub Pages: push na `main` publica sozinho (republica a semana já gerada, não gera de novo).
+
+Cloudflare:
 
 ```bash
 npx wrangler pages deploy public --project-name germanica-relatorio-semanal --branch main

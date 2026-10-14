@@ -462,8 +462,10 @@
 (function(){
   "use strict";
 
-  // Os números vêm de /api/dados (Pages Function que lê relatorio_germanica_semanal, tabela
-  // regerada toda segunda — ver power law/sql/2026-10-14-relatorio-germanica-semanal.sql).
+  // Os números vêm de dados.json: no Cloudflare é a Pages Function functions/dados.json.js,
+  // no GitHub Pages é o arquivo que o Actions gera (.github/workflows/relatorio.yml). Os dois
+  // leem relatorio_germanica_semanal, tabela regerada toda segunda (ver
+  // power law/sql/2026-10-14-relatorio-germanica-semanal.sql, no repo da Stroke).
   // A página é a mesma toda semana; só o dado muda. Nada de número colado aqui.
   //
   // Formato de cada marca em DADOS — DOIS EIXOS INDEPENDENTES, cada um fechando `crm`:
@@ -480,7 +482,7 @@
   //
   // `vendas`/`fat` é um TERCEIRO universo: venda conta pela data de faturamento, não pela semana
   // em que o lead entrou. Uma marca pode ter vend:0 e venda faturada na mesma semana.
-  fetch("api/dados", {cache: "no-cache"})
+  fetch("dados.json", {cache: "no-cache"})
     .then(function(r){
       return r.json().then(function(j){
         if(!r.ok) throw new Error(j.erro || ("HTTP " + r.status));

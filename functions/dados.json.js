@@ -1,4 +1,4 @@
-// GET /api/dados → a semana mais recente de relatorio_germanica_semanal.
+// GET /dados.json → a semana mais recente de relatorio_germanica_semanal.
 //
 // A tabela só abre pra service_role (RLS sem policy, anon revogado): a chave anon é pública e
 // isto é número de negócio do cliente. Esta função é a única porta. Se um dia a página precisar
