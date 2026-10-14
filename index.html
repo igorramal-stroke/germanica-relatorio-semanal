@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grupo Germânica · Relatório semanal de mídia · 21 a 27 de setembro de 2026</title>
-<meta name="description" content="Relatório semanal de mídia paga e chegada de leads no CRM. Grupo Germânica, 21 a 27 de setembro de 2026. Stroke.">
+<title>Grupo Germânica · Relatório semanal de mídia</title>
+<meta name="description" content="Relatório semanal de mídia paga e chegada de leads no CRM. Grupo Germânica. Stroke.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -304,7 +304,7 @@
       </div>
       <div class="periodo">
         <div class="rot">Semana</div>
-        <div class="datas">21/09 a 27/09 de 2026</div>
+        <div class="datas" id="periodo"></div>
       </div>
     </div>
   </header>
@@ -429,7 +429,7 @@
         <div>
           <h3>Por que uma marca passa de 100%</h3>
           <p>
-            Jeep e Volvo registraram no CRM mais leads do que a mídia contou. Isso é esperado:
+            <span id="nota-100"></span> Isso é esperado:
             o CRM recebe contatos de origens que a plataforma de anúncio não contabiliza, e um
             lead que chega no domingo à noite costuma entrar no sistema na segunda-feira. Passar
             de 100% não é erro de medição nem mérito da operação, é diferença de calendário e de
@@ -440,24 +440,20 @@
       <div class="nota-item">
         <span class="idx">2</span>
         <div>
-          <h3>Por que taxa baixa nem sempre é falha de atendimento</h3>
+          <h3>Por que a Harley-Davidson tem taxa mais baixa</h3>
           <p>
-            Tennessee Harley-Davidson tem a menor taxa da semana e, ao mesmo tempo, um dos menores
-            custos por lead da lista. O anúncio de WhatsApp gera muita conversa e nem toda conversa vira
-            um registro no CRM. Volume alto e barato costuma vir acompanhado de taxa de registro
-            menor, o que pede leitura junto do custo por lead e não isoladamente.
+            A Tennessee Harley-Davidson anuncia também por WhatsApp, e cada conversa iniciada conta
+            como lead do lado da mídia. Nem toda conversa vira registro no CRM, então a taxa dela
+            tende a ficar abaixo das outras marcas, que usam só formulário. Por isso a taxa da Harley
+            pede leitura junto do custo por lead, e não isolada.
           </p>
         </div>
       </div>
     </div>
-    <p class="carimbo">
-      Dados do CRM consultados em 1º de outubro de 2026. A situação de cada lead e o faturamento
-      continuam mudando depois que a semana fecha: o vendedor segue atendendo e a nota fiscal entra
-      com atraso. Uma nova consulta desta mesma semana pode trazer outros números no funil e nas vendas.
-    </p>
+    <p class="carimbo" id="carimbo"></p>
     <div class="rodape-fim">
       <img src="stroke-black.png" alt="Stroke" width="64" height="16">
-      <span>Grupo Germânica · Semana de 21 a 27 de setembro de 2026</span>
+      <span id="rodape-semana"></span>
     </div>
   </div>
 </footer>
@@ -466,8 +462,12 @@
 (function(){
   "use strict";
 
-  // Fonte única de verdade. Gráficos, tabela e totais saem daqui.
-  // ponytail: dado fixo no arquivo porque o relatório é a foto de uma semana.
+  // ── A CADA SEMANA, só este bloco muda ──────────────────────────────────────────────────────
+  // SEMANA: segunda e domingo da semana, e o dia em que os dados foram consultados.
+  // DADOS: cole o JSON que sai de relatorio-germanica/dados_semana.sql (mesmas datas de SEMANA).
+  // O resto da página (gráficos, totais, notas, datas) é montado a partir daqui.
+  var SEMANA = {ini:"2026-10-05", fim:"2026-10-11", consulta:"2026-10-14"};
+
   var DADOS = [
     // DOIS EIXOS INDEPENDENTES, cada um fechando o total `crm` da marca:
     //
@@ -482,17 +482,24 @@
     // depois de já ter falado, e pelo mais recente o lead regredia de etapa.
     //
     // `vendas`/`fat` é um TERCEIRO universo: venda conta pela data de faturamento, não pela semana
-    // em que o lead entrou. Por isso Jeep tem vend:3 aqui e 10 vendas faturadas lá embaixo.
-    {marca:"GWM Germânica",           curto:"GWM",             inv:13794.15, midia:221, crm:182, agend:106, pend:23, perd:51, vend:2, nada:33,  tent:139, falou:10, negoc:0, visita:0, vendas:5,  fat:1169995.96},
-    {marca:"Omoda Jaecoo Germânica",  curto:"Omoda Jaecoo",    inv:11595.69, midia:411, crm:329, agend:166, pend:67, perd:96, vend:0, nada:157, tent:111, falou:60, negoc:1, visita:0, vendas:0,  fat:0},
-    {marca:"Germânica Volkswagen",    curto:"Volkswagen",      inv:6680.17,  midia:254, crm:209, agend:134, pend:17, perd:58, vend:0, nada:29,  tent:152, falou:22, negoc:5, visita:1, vendas:0,  fat:0},
-    {marca:"Toyota Nipônica",         curto:"Toyota Nipônica", inv:4739.26,  midia:173, crm:152, agend:82,  pend:3,  perd:67, vend:0, nada:16,  tent:119, falou:15, negoc:2, visita:0, vendas:5,  fat:1120990.00},
-    {marca:"Jeep Germânica",          curto:"Jeep",            inv:4227.20,  midia:291, crm:298, agend:275, pend:2,  perd:18, vend:3, nada:6,   tent:235, falou:56, negoc:1, visita:0, vendas:10, fat:1587851.60, nota:1},
-    {marca:"Germânica Kia",           curto:"Kia",             inv:3036.07,  midia:45,  crm:37,  agend:28,  pend:0,  perd:9,  vend:0, nada:0,   tent:37,  falou:0,  negoc:0, visita:0, vendas:0,  fat:0},
-    {marca:"Germânica RAM",           curto:"RAM",             inv:3011.44,  midia:95,  crm:75,  agend:63,  pend:1,  perd:7,  vend:4, nada:5,   tent:65,  falou:5,  negoc:0, visita:0, vendas:1,  fat:189886.85},
-    {marca:"Escandinávia Volvo",      curto:"Volvo",           inv:2726.75,  midia:62,  crm:74,  agend:38,  pend:0,  perd:36, vend:0, nada:2,   tent:67,  falou:5,  negoc:0, visita:0, vendas:0,  fat:0, nota:1},
-    {marca:"Tennessee Harley-Davidson",curto:"Harley-Davidson",inv:2603.72,  midia:165, crm:112, agend:37,  pend:2,  perd:73, vend:0, nada:7,   tent:49,  falou:56, negoc:0, visita:0, vendas:2,  fat:252000.00, nota:2}
+    // em que o lead entrou. Uma marca pode ter vend:0 aqui e venda faturada lá embaixo.
+    {marca:"GWM Germânica",            curto:"GWM",             inv:14779.22, midia:267, crm:226, agend:142, pend:63, perd:21, vend:0, nada:68, tent:140, falou:15, negoc:1, visita:2, vendas:1, fat:225000.00},
+    {marca:"Germânica Volkswagen",     curto:"Volkswagen",      inv:7930.62,  midia:340, crm:266, agend:182, pend:21, perd:63, vend:0, nada:23, tent:195, falou:42, negoc:5, visita:1, vendas:1, fat:107400.00},
+    {marca:"Jeep Germânica",           curto:"Jeep",            inv:3774.33,  midia:124, crm:132, agend:125, pend:3,  perd:4,  vend:0, nada:2,  tent:105, falou:25, negoc:0, visita:0, vendas:0, fat:0},
+    {marca:"Toyota Nipônica",          curto:"Toyota Nipônica", inv:3763.99,  midia:133, crm:125, agend:74,  pend:3,  perd:48, vend:0, nada:13, tent:102, falou:9,  negoc:1, visita:0, vendas:0, fat:0},
+    {marca:"Tennessee Harley-Davidson",curto:"Harley-Davidson", inv:3576.58,  midia:255, crm:126, agend:72,  pend:1,  perd:53, vend:0, nada:4,  tent:96,  falou:25, negoc:0, visita:1, vendas:0, fat:0},
+    {marca:"Germânica Kia",            curto:"Kia",             inv:3569.85,  midia:61,  crm:56,  agend:40,  pend:0,  perd:16, vend:0, nada:2,  tent:54,  falou:0,  negoc:0, visita:0, vendas:0, fat:0},
+    {marca:"Germânica RAM",            curto:"RAM",             inv:3031.10,  midia:105, crm:89,  agend:84,  pend:0,  perd:5,  vend:0, nada:3,  tent:79,  falou:6,  negoc:1, visita:0, vendas:0, fat:0},
+    {marca:"Escandinávia Volvo",       curto:"Volvo",           inv:3001.86,  midia:92,  crm:90,  agend:72,  pend:0,  perd:18, vend:0, nada:0,  tent:89,  falou:1,  negoc:0, visita:0, vendas:0, fat:0},
+    {marca:"Omoda Jaecoo Germânica",   curto:"Omoda Jaecoo",    inv:2729.92,  midia:146, crm:128, agend:63,  pend:46, perd:19, vend:0, nada:62, tent:45,  falou:21, negoc:0, visita:0, vendas:0, fat:0}
   ];
+  // ── fim do bloco semanal ───────────────────────────────────────────────────────────────────
+
+  // Notas do rodapé: 1 = passou de 100% (calculado), 2 = Harley (WhatsApp, sempre).
+  DADOS.forEach(function(d){
+    if(d.crm > d.midia) d.nota = 1;
+    else if(d.curto === "Harley-Davidson") d.nota = 2;
+  });
 
   var fmtInt  = new Intl.NumberFormat("pt-BR");
   var fmtBRL  = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2});
@@ -529,8 +536,13 @@
   }).join("");
 
   /* ── gráfico halter: mídia → CRM ────────────────────────── */
-  var TICKS = [0,100,200,300,400];
-  var ESCALA = 420; // acima do maior valor da semana (411)
+  // Escala sai do maior valor da semana, arredondado pra cima na centena, com folga de 5%
+  // pro ponto não encostar na borda.
+  var maior = DADOS.reduce(function(m,d){ return Math.max(m, d.midia, d.crm); }, 0);
+  var topo = Math.max(100, Math.ceil(maior / 100) * 100);
+  var TICKS = [];
+  for(var t = 0; t <= topo; t += topo > 500 ? 200 : 100) TICKS.push(t);
+  var ESCALA = Math.max(topo, maior * 1.05);
 
   function posicao(v){ return (v / ESCALA) * 100; }
 
@@ -656,10 +668,41 @@
     '</div>';
   }).join("");
 
+  /* ── textos que dependem da semana ──────────────────────── */
+  var MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto",
+               "setembro","outubro","novembro","dezembro"];
+  function data(iso){ var p = iso.split("-"); return {d:+p[2], m:+p[1], a:+p[0]}; }
+  function dd(n){ return (n < 10 ? "0" : "") + n; }
+  function extenso(x){ return (x.d === 1 ? "1º" : x.d) + " de " + MESES[x.m-1] + " de " + x.a; }
+  // "5 a 11 de outubro de 2026" ou, virando o mês, "28 de setembro a 4 de outubro de 2026"
+  function intervalo(i, f){
+    return i.m === f.m ? i.d + " a " + extenso(f) : i.d + " de " + MESES[i.m-1] + " a " + extenso(f);
+  }
+  // "A", "A e B", "A, B e C"
+  function lista(n){ return n.length < 2 ? n.join("") : n.slice(0,-1).join(", ") + " e " + n[n.length-1]; }
+
+  var ini = data(SEMANA.ini), fim = data(SEMANA.fim);
+  document.getElementById("periodo").textContent =
+    dd(ini.d) + "/" + dd(ini.m) + " a " + dd(fim.d) + "/" + dd(fim.m) + " de " + fim.a;
+  document.getElementById("rodape-semana").textContent =
+    "Grupo Germânica · Semana de " + intervalo(ini, fim);
+
   var nomes = semVenda.map(function(d){ return d.curto; });
-  document.getElementById("sem-venda").textContent =
-    nomes.slice(0,-1).join(", ") + " e " + nomes[nomes.length-1] +
-    " não tiveram venda faturada entre 21 e 27 de setembro.";
+  var semVendaEl = document.getElementById("sem-venda");
+  if(!nomes.length) semVendaEl.hidden = true;
+  else semVendaEl.textContent = lista(nomes) + (nomes.length === 1 ? " não teve" : " não tiveram") +
+    " venda faturada de " + intervalo(ini, fim).replace(/ de \d{4}$/, "") + ".";
+
+  var acima = DADOS.filter(function(d){ return d.crm > d.midia; }).map(function(d){ return d.curto; });
+  document.getElementById("nota-100").textContent = acima.length
+    ? lista(acima) + (acima.length === 1 ? " registrou" : " registraram") + " no CRM mais leads do que a mídia contou."
+    : "Nesta semana nenhuma marca passou de 100%, mas acontece.";
+
+  document.getElementById("carimbo").textContent =
+    "Dados do CRM consultados em " + extenso(data(SEMANA.consulta)) + ". A situação de cada lead e " +
+    "o faturamento continuam mudando depois que a semana fecha: o vendedor segue atendendo e a nota " +
+    "fiscal entra com atraso. Uma nova consulta desta mesma semana pode trazer outros números no " +
+    "funil e nas vendas.";
 })();
 </script>
 </body>
