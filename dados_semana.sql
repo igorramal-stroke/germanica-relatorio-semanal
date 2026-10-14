@@ -8,12 +8,22 @@
 -- rode os CTEs `midia`, `crm` e `vendas` como consultas separadas, uma de cada vez, e cancele
 -- (pg_cancel_backend) o que ficar rodando órfão antes de disparar a próxima.
 --
--- Lê as VIEWS direto, sem a matview crm_germanica_comparativo_mv: não grava nada no banco.
--- (A matview ficava velha sem refresh manual, e o banco é free com disco no limite.)
+-- Lê as tabelas/views de origem direto, sem matview: não grava nada no banco.
 --
--- Recorte = o da planilha semanal do cliente (ver docs/2026-08-24-planilha-semanal-germanica-spec.md):
---   mídia: Meta, varejo com "lead ad" no nome + "move brasil" + Harley varejo somando conversa de WhatsApp
---   CRM:   crm_germanica_lead_relatorio (mesmo filtro da planilha, já aplicado na view)
+-- MARCAS
+--   As 9 da planilha semanal do cliente seguem a régua dela (crm_germanica_lead_relatorio, ver
+--   power law/sql/2026-08-24-crm-funil-germanica.sql): varejo + canal lead_ad, Harley soma
+--   WhatsApp, GWM/RAM/Kia só categoria "Novos". Reproduzida aqui, ver o CTE `lead`.
+--
+--   BMW, BMW Motorrad e MINI entraram a pedido do time em 14/10, quando a Stroke começou a rodar
+--   lead ad de varejo nelas. A classificação do CRM deixa a marca delas NULA, então a marca sai da
+--   `equipe`. E só contam leads de campanha com "stroke" no nome: essas equipes também recebem
+--   lead ad que NÃO é nosso (campanhas "[Leads][Formulário] Oferta mês", 149 leads no Motorrad e
+--   72 na BMW na SEM 41). Sem esse filtro a chegada ao CRM dava 250%.
+--
+--   Lexus fica FORA: nenhum lead das nossas campanhas chega ao CRM como lead ad (entram como
+--   "Site"), então a taxa sairia 0% por problema de integração, não de atendimento.
+--   Leapmotor fica fora: o time não pediu, e o CRM mostra 60 leads "stroke" contra 35 na mídia.
 --
 -- Dois eixos por marca, cada um somando `crm` (o index.html confere ao carregar):
 --   status: agend/pend/perd/vend
@@ -34,10 +44,13 @@ nomes(marca, curto, brand) as (values
   ('Germânica Kia',             'Kia',             'Kia'),
   ('Germânica RAM',             'RAM',             'RAM'),
   ('Escandinávia Volvo',        'Volvo',           'Volvo'),
-  ('Tennessee Harley-Davidson', 'Harley-Davidson', 'Harley-Davidson')
+  ('Tennessee Harley-Davidson', 'Harley-Davidson', 'Harley-Davidson'),
+  ('Germânica BMW',             'BMW',             'BMW'),
+  ('Germânica BMW Motorrad',    'BMW Motorrad',    'BMW Motorrad'),
+  ('Germânica MINI',            'MINI',            'MINI')
 ),
 midia as (
-  select coalesce(n.marca, case when a.account_name ilike '%toyota%' then 'Toyota Nipônica' end) as marca,
+  select coalesce(n.marca, case when a.brand is null and a.account_name ilike '%toyota%' then 'Toyota Nipônica' end) as marca,
          sum(d.spend) as inv,
          sum(d.leads + case when a.brand = 'Harley-Davidson' then coalesce(d.conversas, 0) else 0 end) as midia
   from daily_metrics d
@@ -52,13 +65,43 @@ midia as (
          or (a.brand = 'Harley-Davidson' and d.business_type = 'varejo'))
   group by 1
 ),
--- CRM numa varredura só. Reproduz crm_germanica_lead + o filtro de crm_germanica_lead_relatorio
--- (ver power law/sql/2026-08-24-crm-funil-germanica.sql) e calcula a etapa na MESMA janela.
--- Usar a view e juntar a etapa por fora varre os eventos duas vezes (~1 GB de jsonb) e passa de
--- 60s, que é o limite do conector MCP. Conferido em 14/10: dá o mesmo crm por marca que a view.
+-- Um lead por linha, atributos do evento mais recente. Uma varredura só dos eventos (~1 GB de
+-- jsonb): passar pela view e juntar a etapa por fora varre duas vezes e estoura os 60s do MCP.
+-- Conferido em 14/10: mesmo crm por marca que crm_germanica_lead_relatorio nas 9 marcas antigas.
 -- Se a view mudar de filtro, este bloco tem que mudar junto.
+lead as (
+  select coalesce(marca, case when equipe ilike '%motorrad%' then 'Germânica BMW Motorrad'
+                              when equipe ilike '%bmw%'      then 'Germânica BMW'
+                              when equipe ilike '%mini%'     then 'Germânica MINI' end) as marca_rel,
+         *
+  from (
+    select c.marca, c.equipe, c.frente, c.canal, c.categoria, c.campanha, c.status as status_atual,
+           max(c.lead_criado_em) over w as lead_criado_em,
+           bool_or(c.m = 'tentativa de contato')       over w as tentou,
+           bool_or(c.m = 'primeiro contato realizado') over w as falou,
+           bool_or(c.m = 'em negociação')              over w as negociou,
+           bool_or(c.m = 'visita showroom')            over w as visitou,
+           max(case when c.venda_realizada then c.venda_faturada_em end) over w as venda_faturada_em,
+           max(case when c.venda_realizada then c.venda_valor end)       over w as venda_valor,
+           row_number() over (partition by c.lead_id order by c.received_at desc) as rn
+    from (select *, lower(regexp_replace(coalesce(motivo, ''), '^\s*\d+\s*-\s*', '')) as m
+          from crm_germanica_classificado) c
+    window w as (partition by c.lead_id)
+  ) t
+  where rn = 1 and frente = 'varejo'
+    and (
+      -- as 9 marcas da planilha: régua de crm_germanica_lead_relatorio
+      (marca is not null
+       and (canal = 'lead_ad' or (canal = 'whatsapp' and marca = 'Tennessee Harley-Davidson'))
+       and (marca not in ('GWM Germânica', 'Germânica RAM', 'Germânica Kia') or categoria ilike 'novos'))
+      or
+      -- BMW, Motorrad, MINI: marca pela equipe, só campanha nossa
+      (marca is null and campanha ilike '%stroke%'
+       and (equipe ilike '%motorrad%' or equipe ilike '%bmw%' or equipe ilike '%mini%'))
+    )
+),
 crm as (
-  select marca,
+  select marca_rel as marca,
          count(*) as crm,
          count(*) filter (where status_atual = 'scheduled')          as agend,
          count(*) filter (where status_atual = 'pending')            as pend,
@@ -69,28 +112,13 @@ crm as (
          count(*) filter (where falou and not (negociou or visitou))            as falou,
          count(*) filter (where negociou and not visitou)                       as negoc,
          count(*) filter (where visitou)                                        as visita
-  from (
-    select c.marca, c.frente, c.canal, c.categoria, c.status as status_atual,
-           max(c.lead_criado_em) over w as lead_criado_em,
-           bool_or(c.m = 'tentativa de contato')       over w as tentou,
-           bool_or(c.m = 'primeiro contato realizado') over w as falou,
-           bool_or(c.m = 'em negociação')              over w as negociou,
-           bool_or(c.m = 'visita showroom')            over w as visitou,
-           row_number() over (partition by c.lead_id order by c.received_at desc) as rn
-    from (select *, lower(regexp_replace(coalesce(motivo, ''), '^\s*\d+\s*-\s*', '')) as m
-          from crm_germanica_classificado) c
-    window w as (partition by c.lead_id)
-  ) t, params p
-  where rn = 1
-    and marca is not null and frente = 'varejo'
-    and (canal = 'lead_ad' or (canal = 'whatsapp' and marca = 'Tennessee Harley-Davidson'))
-    and (marca not in ('GWM Germânica', 'Germânica RAM', 'Germânica Kia') or categoria ilike 'novos')
-    and lead_criado_em::date between p.ini and p.fim
+  from lead, params p
+  where lead_criado_em::date between p.ini and p.fim
   group by 1
 ),
 vendas as (
-  select marca, count(*) as vendas, coalesce(sum(venda_valor), 0) as fat
-  from crm_germanica_lead_relatorio, params p
+  select marca_rel as marca, count(*) as vendas, coalesce(sum(venda_valor), 0) as fat
+  from lead, params p
   where venda_faturada_em::date between p.ini and p.fim
   group by 1
 )

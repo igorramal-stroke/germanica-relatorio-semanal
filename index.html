@@ -485,13 +485,16 @@
     // em que o lead entrou. Uma marca pode ter vend:0 aqui e venda faturada lá embaixo.
     {marca:"GWM Germânica",            curto:"GWM",             inv:14779.22, midia:267, crm:226, agend:142, pend:63, perd:21, vend:0, nada:68, tent:140, falou:15, negoc:1, visita:2, vendas:1, fat:225000.00},
     {marca:"Germânica Volkswagen",     curto:"Volkswagen",      inv:7930.62,  midia:340, crm:266, agend:182, pend:21, perd:63, vend:0, nada:23, tent:195, falou:42, negoc:5, visita:1, vendas:1, fat:107400.00},
+    {marca:"Germânica BMW",            curto:"BMW",             inv:5560.18,  midia:43,  crm:33,  agend:21,  pend:0,  perd:12, vend:0, nada:0,  tent:27,  falou:5,  negoc:0, visita:1, vendas:0, fat:0},
     {marca:"Jeep Germânica",           curto:"Jeep",            inv:3774.33,  midia:124, crm:132, agend:125, pend:3,  perd:4,  vend:0, nada:2,  tent:105, falou:25, negoc:0, visita:0, vendas:0, fat:0},
     {marca:"Toyota Nipônica",          curto:"Toyota Nipônica", inv:3763.99,  midia:133, crm:125, agend:74,  pend:3,  perd:48, vend:0, nada:13, tent:102, falou:9,  negoc:1, visita:0, vendas:0, fat:0},
     {marca:"Tennessee Harley-Davidson",curto:"Harley-Davidson", inv:3576.58,  midia:255, crm:126, agend:72,  pend:1,  perd:53, vend:0, nada:4,  tent:96,  falou:25, negoc:0, visita:1, vendas:0, fat:0},
     {marca:"Germânica Kia",            curto:"Kia",             inv:3569.85,  midia:61,  crm:56,  agend:40,  pend:0,  perd:16, vend:0, nada:2,  tent:54,  falou:0,  negoc:0, visita:0, vendas:0, fat:0},
+    {marca:"Germânica MINI",           curto:"MINI",            inv:3120.34,  midia:54,  crm:45,  agend:23,  pend:0,  perd:22, vend:0, nada:4,  tent:41,  falou:0,  negoc:0, visita:0, vendas:0, fat:0},
     {marca:"Germânica RAM",            curto:"RAM",             inv:3031.10,  midia:105, crm:89,  agend:84,  pend:0,  perd:5,  vend:0, nada:3,  tent:79,  falou:6,  negoc:1, visita:0, vendas:0, fat:0},
     {marca:"Escandinávia Volvo",       curto:"Volvo",           inv:3001.86,  midia:92,  crm:90,  agend:72,  pend:0,  perd:18, vend:0, nada:0,  tent:89,  falou:1,  negoc:0, visita:0, vendas:0, fat:0},
-    {marca:"Omoda Jaecoo Germânica",   curto:"Omoda Jaecoo",    inv:2729.92,  midia:146, crm:128, agend:63,  pend:46, perd:19, vend:0, nada:62, tent:45,  falou:21, negoc:0, visita:0, vendas:0, fat:0}
+    {marca:"Omoda Jaecoo Germânica",   curto:"Omoda Jaecoo",    inv:2729.92,  midia:146, crm:128, agend:63,  pend:46, perd:19, vend:0, nada:62, tent:45,  falou:21, negoc:0, visita:0, vendas:0, fat:0},
+    {marca:"Germânica BMW Motorrad",   curto:"BMW Motorrad",    inv:2382.08,  midia:85,  crm:70,  agend:50,  pend:0,  perd:20, vend:0, nada:1,  tent:68,  falou:0,  negoc:0, visita:1, vendas:0, fat:0}
   ];
   // ── fim do bloco semanal ───────────────────────────────────────────────────────────────────
 
@@ -520,7 +523,7 @@
 
   /* ── totais da semana ───────────────────────────────────── */
   var kpis = [
-    {rot:"Investimento",    val:fmtBRL.format(T.inv),  nota:"Mídia paga nas nove marcas"},
+    {rot:"Investimento",    val:fmtBRL.format(T.inv),  nota:"Mídia paga nas " + DADOS.length + " marcas"},
     {rot:"Gerados na mídia",val:fmtInt.format(T.midia),nota:"Leads entregues pelas plataformas de anúncio"},
     {rot:"Leads no CRM",    val:fmtInt.format(T.crm),  nota:"Viraram registro no CRM da concessionária"},
     {rot:"Chegou ao CRM",   val:pct(T.crm/T.midia*100),nota:"Leads no CRM dividido por gerados na mídia", destaque:true},
