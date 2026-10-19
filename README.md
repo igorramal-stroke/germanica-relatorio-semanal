@@ -1,55 +1,46 @@
 # Relatório semanal · Grupo Germânica
 
 Página que o cliente abre toda segunda: mídia Meta × CRM, marca a marca.
+Cloudflare Pages, conta da empresa, projeto `relatorio-germanica`.
 
 ```
-public/                        o que vai pro ar (index.html + logo). Só esta pasta é publicada.
-functions/dados.json.js        Cloudflare: /dados.json lê a semana mais recente com a service role
-.github/workflows/relatorio.yml  GitHub Pages (PROVISÓRIO): gera e publica /dados.json toda segunda
+public/                   o que vai pro ar (index.html + logo). Só esta pasta é publicada.
+functions/dados.json.js   /dados.json: lê a semana mais recente no Supabase com a service role
 ```
 
-A página sempre busca `dados.json`. No Cloudflare quem responde é a Function, ao vivo; no
-GitHub Pages é um arquivo estático que o Actions grava a cada publicação. Mesmo formato.
+O repositório no GitHub é só o código. O site não é servido de lá.
 
 ## Como se atualiza sozinho
 
-1. A função `relatorio_germanica_gerar()` do Supabase calcula a última semana fechada e grava
-   uma linha em `relatorio_germanica_semanal`. Ela se recusa a gravar semana sem lead nenhum
-   (coleta parada), semana em andamento ou semana em que os eixos do funil não fecham o CRM.
-2. Quem chama a função toda segunda:
-   - **Hoje (GitHub Pages):** o workflow `relatorio.yml`, segunda 7h de Brasília. Gera, baixa e
-     publica. Se a geração falhar, não publica e o GitHub manda e-mail.
-   - **Também:** o acionador de segunda 6h do Apps Script da planilha semanal
-     (`docs/apps-script/germanica-planilha-semanal.gs`), quando o código novo for colado lá.
-     Rodar duas vezes não estraga nada: a função sobrescreve a semana.
-3. Regerar na mão pelo GitHub: aba Actions > Relatório semanal > Run workflow.
+1. **Segunda, 6h** — o acionador do Apps Script da planilha semanal
+   (`docs/apps-script/germanica-planilha-semanal.gs` no repo da Stroke, função
+   `preencherSemanaPassada`) preenche a planilha e chama `relatorio_germanica_gerar()`.
+2. A função calcula a última semana fechada e grava uma linha em `relatorio_germanica_semanal`.
+   Ela se recusa a gravar semana sem lead nenhum (coleta parada), semana em andamento ou semana
+   em que os eixos do funil não fecham o total do CRM. Aí o acionador falha e o Google manda e-mail.
+3. A página busca `/dados.json`, que devolve a linha mais recente. Não precisa publicar de novo:
+   muda o dado, a página é a mesma.
 
-Ao passar pro Cloudflare: desligar o workflow e apagar os secrets do GitHub. Aí só o Apps Script
-gera, e a Function serve o dado ao vivo sem precisar publicar de novo.
+SQL da tabela e da função: `power law/sql/2026-10-14-relatorio-germanica-semanal.sql` (repo da Stroke).
 
-SQL da tabela e da função: `power law/sql/2026-10-14-relatorio-germanica-semanal.sql`.
-
-**Regerar uma semana na mão** (corrigiu dado, entrou venda atrasada), no SQL Editor:
+**Regerar uma semana na mão** (corrigiu dado, entrou venda atrasada), no SQL Editor do Supabase:
 
 ```sql
-select relatorio_germanica_gerar('2026-10-05');   -- segunda da semana
+select relatorio_germanica_gerar('2026-10-12');   -- segunda da semana; só semana já fechada
 ```
 
 Leva cerca de 1 minuto. Sobrescreve a semana com o número do momento.
 
-## Publicar mudança na página (não é toda semana, só quando o código muda)
+## Publicar mudança na página (só quando o código muda, não toda semana)
 
-GitHub Pages: push na `main` publica sozinho (republica a semana já gerada, não gera de novo).
-
-Cloudflare:
+De dentro de `relatorio-germanica/` (a pasta `functions/` tem que estar onde o comando roda):
 
 ```bash
-npx wrangler pages deploy public --project-name germanica-relatorio-semanal --branch main
+npx wrangler pages deploy public --project-name relatorio-germanica --branch main
 ```
 
-Rodar de dentro de `relatorio-germanica/`: a pasta `functions/` tem que estar onde o comando roda.
 Secrets do projeto no Cloudflare (Settings > Variables and Secrets): `SUPABASE_URL` e
-`SUPABASE_SERVICE_ROLE_KEY`. Nunca em arquivo.
+`SUPABASE_SERVICE_ROLE_KEY`. Nunca em arquivo. Secret novo só vale a partir do próximo deploy.
 
 Teste local: configurações `relatorio-germanica-mock` + `relatorio-germanica` no
 `.claude/launch.json` (Supabase falso respondendo uma semana fixa).
@@ -63,7 +54,7 @@ Teste local: configurações `relatorio-germanica-mock` + `relatorio-germanica` 
 - **CRM, BMW, BMW Motorrad e MINI** (desde a SEM 41, a pedido do time): só leads de campanha
   com "stroke" no nome. Essas equipes também recebem lead ad que não é nosso.
 - **Fora:** Lexus (os leads das nossas campanhas não chegam ao CRM como lead ad, entram como
-  "Site"; a taxa sairia 0%) e Leapmotor.
+  "Site"; a taxa sairia 0%), Leapmotor, e Baic até ter campanha.
 
 ## Antes de validar
 
@@ -73,8 +64,9 @@ Teste local: configurações `relatorio-germanica-mock` + `relatorio-germanica` 
   segunda de manhã; o rodapé carimba quando foi gerada.
 - A página confere, ao carregar, se os dois eixos do funil (status e etapa) somam o total do CRM
   de cada marca. Se não somarem, ela quebra de propósito em vez de desenhar uma barra errada.
-- O bloco "Leitura da semana" é texto de exemplo.
+- O bloco "Leitura da semana" está escondido: é texto de exemplo até o time escrever.
 
 ## Ainda não existe
 
-Controle de acesso: a página é pública pra quem tiver o link.
+Controle de acesso (a página é pública pra quem tiver o link) e domínio próprio (o DNS do
+stroke.ag fica na Dyn, fora do Cloudflare: precisa de um CNAME criado por quem cuida do DNS).
