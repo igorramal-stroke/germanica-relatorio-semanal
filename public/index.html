@@ -96,10 +96,20 @@
   }
   .topo-linha{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-4)}
   .topo-sub{margin-top:var(--sp-2);color:var(--muted);font-size:15px}
-  .periodo{text-align:right}
-  .periodo .rot{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  .periodo .datas{font-family:var(--mono);font-size:clamp(15px,2.6vw,18px);color:var(--ink);margin-top:2px;white-space:nowrap}
-  @media (max-width:640px){.periodo{text-align:left}}
+  /* seletores de semana e marca: select nativo (teclado, leitor de tela e celular de graça) */
+  .controles{display:flex;flex-wrap:wrap;gap:var(--sp-3) var(--sp-4);align-items:flex-end}
+  .controle{display:flex;flex-direction:column;gap:6px}
+  .controle label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .sel{
+    font-family:var(--mono);font-size:15px;color:var(--ink);background-color:var(--surface);
+    border:1px solid var(--border-strong);border-radius:var(--r);padding:9px 34px 9px 12px;
+    min-width:200px;cursor:pointer;-webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2370707c' stroke-width='1.6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center
+  }
+  .sel:hover{border-color:var(--muted)}
+  .sel:focus-visible{outline:2px solid var(--meta);outline-offset:2px}
+  @media (max-width:640px){.controle{flex:1 1 160px}.sel{min-width:0;width:100%}}
 
   /* ── faixa de totais ─────────────────────────────────────── */
   .totais{
@@ -115,6 +125,9 @@
     letter-spacing:-.02em;line-height:1.1;margin-top:var(--sp-2);font-variant-numeric:tabular-nums
   }
   .kpi .nota{font-size:13px;color:var(--muted);margin-top:var(--sp-2);line-height:1.4}
+  /* variação neutra de propósito: investimento subindo não é "bom" nem "ruim" por si */
+  .kpi .delta{font-size:13px;color:var(--text);margin-top:6px;font-variant-numeric:tabular-nums}
+  .kpi .delta span{color:var(--muted)}
   .kpi.destaque .val{color:var(--stroke-red)}
   @media (max-width:760px){
     .totais{grid-template-columns:repeat(2,1fr)}
@@ -237,6 +250,28 @@
   .v-qtd .mono{color:var(--ink)}
   .sem-venda{margin-top:var(--sp-6)}
 
+  /* ── criativos do mês ────────────────────────────────────── */
+  .criativos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--sp-8) var(--sp-6)}
+  @media (max-width:600px){.criativos{gap:var(--sp-6) var(--sp-4)}}
+  .cr{position:relative;min-width:0}
+  .cr-img{
+    aspect-ratio:1/1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);
+    overflow:hidden;display:flex;align-items:center;justify-content:center;
+    font-size:12px;color:var(--muted);text-align:center
+  }
+  .cr-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .cr-img span{padding:var(--sp-3)}
+  .cr-pos{
+    position:absolute;top:8px;left:8px;min-width:24px;height:24px;padding:0 7px;border-radius:12px;
+    background:var(--ink);color:var(--surface);font-family:var(--mono);font-size:12px;
+    display:flex;align-items:center;justify-content:center
+  }
+  .cr-nome{font-size:15px;color:var(--ink);margin-top:var(--sp-3);overflow-wrap:anywhere}
+  .cr-sub{font-size:12px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+  .cr-nums{font-family:var(--mono);font-size:13px;color:var(--text);margin-top:var(--sp-2)}
+  .cr-nums b{color:var(--ink);font-weight:600}
+  .cr-vazio{color:var(--muted);font-size:14px}
+
   /* ── análise (placeholder) ───────────────────────────────── */
   .analise{
     background:var(--surface-2);border:1px solid var(--border);
@@ -302,9 +337,15 @@
         <h1>Grupo Germânica</h1>
         <p class="topo-sub">Investimento em mídia paga e chegada de leads no CRM, marca a marca.</p>
       </div>
-      <div class="periodo">
-        <div class="rot">Semana</div>
-        <div class="datas" id="periodo"></div>
+      <div class="controles">
+        <div class="controle">
+          <label for="sel-semana">Semana</label>
+          <select id="sel-semana" class="sel"></select>
+        </div>
+        <div class="controle">
+          <label for="sel-marca">Marca</label>
+          <select id="sel-marca" class="sel"></select>
+        </div>
       </div>
     </div>
   </header>
@@ -400,6 +441,18 @@
       <p id="sem-venda" class="apoio sem-venda"></p>
     </section>
 
+    <section id="criativos">
+      <div class="sec-cab">
+        <h2>Criativos que mais trouxeram leads no mês</h2>
+        <p class="apoio max-leitura">
+          <span id="cr-periodo"></span> O período é o mês até o domingo da semana escolhida, não só
+          a semana. Ordem por volume de leads entregues pela plataforma de anúncio, com o custo por
+          lead de cada criativo.
+        </p>
+      </div>
+      <div id="cr-lista" class="criativos"></div>
+    </section>
+
     <section id="leitura" hidden><!-- texto de exemplo: só tirar o hidden quando o time escrever a leitura da semana -->
       <div class="sec-cab">
         <h2>Leitura da semana</h2>
@@ -462,9 +515,9 @@
 (function(){
   "use strict";
 
-  // Os números vêm de dados.json, a Pages Function functions/dados.json.js, que lê a semana
-  // mais recente de relatorio_germanica_semanal (tabela regerada toda segunda, ver
-  // power law/sql/2026-10-14-relatorio-germanica-semanal.sql, no repo da Stroke).
+  // Os números vêm de dados.json, a Pages Function functions/dados.json.js, que lê
+  // relatorio_germanica_semanal (tabela regerada toda segunda, ver
+  // power law/sql/2026-10-20-relatorio-germanica-criativos.sql, no repo da Stroke).
   // A página é a mesma toda semana; só o dado muda. Nada de número colado aqui.
   //
   // Formato de cada marca em DADOS — DOIS EIXOS INDEPENDENTES, cada um fechando `crm`:
@@ -481,24 +534,124 @@
   //
   // `vendas`/`fat` é um TERCEIRO universo: venda conta pela data de faturamento, não pela semana
   // em que o lead entrou. Uma marca pode ter vend:0 e venda faturada na mesma semana.
-  fetch("dados.json", {cache: "no-cache"})
-    .then(function(r){
-      return r.json().then(function(j){
-        if(!r.ok) throw new Error(j.erro || ("HTTP " + r.status));
-        return j;
-      });
-    })
-    .then(function(j){
+
+  var fmtInt  = new Intl.NumberFormat("pt-BR");
+  var fmtBRL  = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2});
+  var fmtBRL0 = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:0,maximumFractionDigits:0});
+  var fmtPct  = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+  var MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto",
+               "setembro","outubro","novembro","dezembro"];
+
+  // Divisão por zero (marca com CRM e sem lead de mídia, ou o contrário) vira "—", não "∞%".
+  function pct(v){ return isFinite(v) ? fmtPct.format(v) + "%" : "—"; }
+  function brl(v){ return isFinite(v) ? fmtBRL.format(v) : "—"; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function data(iso){ var p = iso.slice(0,10).split("-"); return {d:+p[2], m:+p[1], a:+p[0]}; }
+  function dd(n){ return (n < 10 ? "0" : "") + n; }
+  function curta(x){ return dd(x.d) + "/" + dd(x.m); }
+  function extenso(x){ return (x.d === 1 ? "1º" : x.d) + " de " + MESES[x.m-1] + " de " + x.a; }
+  // "5 a 11 de outubro de 2026" ou, virando o mês, "28 de setembro a 4 de outubro de 2026"
+  function intervalo(i, f){
+    return i.m === f.m ? i.d + " a " + extenso(f) : i.d + " de " + MESES[i.m-1] + " a " + extenso(f);
+  }
+  // "A", "A e B", "A, B e C"
+  function lista(n){ return n.length < 2 ? n.join("") : n.slice(0,-1).join(", ") + " e " + n[n.length-1]; }
+
+  // Marca sem nada na semana (campanha pausada, marca recém-entrada) sai da página: a linha
+  // vazia viraria 0/0 = "NaN%" na frente do cliente.
+  function ativas(dados){ return dados.filter(function(d){ return d.inv || d.midia || d.crm || d.vendas; }); }
+
+  /* ── estado e endereço ──────────────────────────────────── */
+  // Semana e marca escolhidas ficam no endereço (?semana=AAAA-MM-DD&marca=GWM): dá pra mandar o
+  // link já filtrado, e recarregar a página não perde a escolha.
+  var url = new URLSearchParams(location.search);
+  var estado = {semana: url.get("semana") || "", marca: url.get("marca") || "", j: null};
+
+  function gravarEndereco(){
+    var p = new URLSearchParams();
+    if(estado.semana) p.set("semana", estado.semana);
+    if(estado.marca) p.set("marca", estado.marca);
+    var q = p.toString();
+    history.replaceState(null, "", location.pathname + (q ? "?" + q : ""));
+  }
+
+  var selSemana = document.getElementById("sel-semana");
+  var selMarca  = document.getElementById("sel-marca");
+
+  selSemana.addEventListener("change", function(){
+    estado.semana = selSemana.value;
+    gravarEndereco();
+    carregar();
+  });
+  selMarca.addEventListener("change", function(){
+    estado.marca = selMarca.value;
+    gravarEndereco();
+    redesenhar();
+  });
+
+  function carregar(){
+    selSemana.disabled = true;
+    return fetch("dados.json" + (estado.semana ? "?semana=" + encodeURIComponent(estado.semana) : ""), {cache: "no-cache"})
+      .then(function(r){
+        return r.json().then(function(j){
+          // Link velho ou digitado com semana que não existe: cai na mais recente em vez de
+          // deixar a página com o seletor vazio e sem saída.
+          if(r.status === 404 && estado.semana){ estado.semana = ""; gravarEndereco(); return null; }
+          if(!r.ok) throw new Error(j.erro || ("HTTP " + r.status));
+          return j;
+        });
+      })
+      .then(function(j){
+        if(!j) return carregar();
+        estado.j = j;
+        montarSeletores(j);
+        redesenhar();
+      })
+      .catch(falha)
+      .then(function(){ selSemana.disabled = false; });
+  }
+
+  function montarSeletores(j){
+    selSemana.innerHTML = j.semanas.map(function(s){
+      var i = data(s.semana_ini), f = data(s.semana_fim);
+      return '<option value="' + esc(s.semana_ini) + '">' + curta(i) + " a " + curta(f) + "/" + f.a + '</option>';
+    }).join("");
+    selSemana.value = j.semana_ini;
+
+    // Só oferece marca que teve movimento na semana. Se a escolhida sumiu (semana em que ela
+    // não rodava), volta pra todas em vez de desenhar uma página vazia.
+    var marcas = ativas(j.dados).map(function(d){ return d.curto; });
+    if(estado.marca && marcas.indexOf(estado.marca) < 0){ estado.marca = ""; gravarEndereco(); }
+    selMarca.innerHTML = '<option value="">Todas as marcas</option>' + marcas.map(function(m){
+      return '<option value="' + esc(m) + '">' + esc(m) + '</option>';
+    }).join("");
+    selMarca.value = estado.marca;
+  }
+
+  function redesenhar(){
+    var j = estado.j, m = estado.marca;
+    function daMarca(d){ return !m || d.curto === m; }
+    try {
+      limparFalha();
       // gerado_em é timestamp UTC; o carimbo mostra o dia em Brasília.
       var consulta = new Date(j.gerado_em).toLocaleDateString("sv-SE", {timeZone: "America/Sao_Paulo"});
-      desenhar({ini: j.semana_ini, fim: j.semana_fim, consulta: consulta}, j.dados);
-    })
-    .catch(falha);
+      desenhar(
+        {ini: j.semana_ini, fim: j.semana_fim, consulta: consulta},
+        ativas(j.dados).filter(daMarca),
+        j.anterior ? ativas(j.anterior.dados).filter(daMarca) : null,
+        (j.criativos.lista || []).filter(daMarca).slice(0, m ? 5 : 10),
+        j.criativos,
+        m
+      );
+    } catch(e){ falha(e); }
+  }
 
   // Sem dado, a página diz isso em vez de ficar em branco ou mostrar número velho.
   function falha(e){
+    limparFalha();
     var aviso = document.createElement("p");
     aviso.className = "sem-js";
+    aviso.id = "aviso-falha";
     aviso.textContent = "Não foi possível carregar os números desta semana (" + e.message + "). " +
       "Avise a Stroke.";
     var alvo = document.getElementById("totais");
@@ -506,26 +659,34 @@
     alvo.hidden = true;
     document.querySelector("main").hidden = true;
   }
+  function limparFalha(){
+    var velho = document.getElementById("aviso-falha");
+    if(velho) velho.remove();
+    document.getElementById("totais").hidden = false;
+    document.querySelector("main").hidden = false;
+  }
 
-  function desenhar(SEMANA, DADOS){
+  /* ── desenho ────────────────────────────────────────────── */
+  var ESTADOS = [
+    {campo:"agend", cor:"--c-agend", rot:"em agendamento"},
+    {campo:"pend",  cor:"--c-pend",  rot:"sem atendimento"},
+    {campo:"perd",  cor:"--c-perd",  rot:"perdidos"},
+    {campo:"vend",  cor:"--c-vend",  rot:"vendidos"}
+  ];
+  var ETAPAS = [
+    {campo:"nada",   cor:"--e-nada",   rot:"sem nada registrado"},
+    {campo:"tent",   cor:"--e-tent",   rot:"só com tentativa"},
+    {campo:"falou",  cor:"--e-falou",  rot:"com contato feito"},
+    {campo:"negoc",  cor:"--e-negoc",  rot:"em negociação"},
+    {campo:"visita", cor:"--e-visita", rot:"com visita ao showroom"}
+  ];
 
-    // Marca sem nada na semana (campanha pausada, marca recém-entrada) sai da página: a linha
-    // vazia viraria 0/0 = "NaN%" na frente do cliente.
-    DADOS = DADOS.filter(function(d){ return d.inv || d.midia || d.crm || d.vendas; });
+  function totais(dados){
+    function soma(c){ return dados.reduce(function(a,d){ return a + d[c]; }, 0); }
+    return {inv:soma("inv"), midia:soma("midia"), crm:soma("crm"), vendas:soma("vendas"), fat:soma("fat")};
+  }
 
-    var ESTADOS = [
-      {campo:"agend", cor:"--c-agend", rot:"em agendamento"},
-      {campo:"pend",  cor:"--c-pend",  rot:"sem atendimento"},
-      {campo:"perd",  cor:"--c-perd",  rot:"perdidos"},
-      {campo:"vend",  cor:"--c-vend",  rot:"vendidos"}
-    ];
-    var ETAPAS = [
-      {campo:"nada",   cor:"--e-nada",   rot:"sem nada registrado"},
-      {campo:"tent",   cor:"--e-tent",   rot:"só com tentativa"},
-      {campo:"falou",  cor:"--e-falou",  rot:"com contato feito"},
-      {campo:"negoc",  cor:"--e-negoc",  rot:"em negociação"},
-      {campo:"visita", cor:"--e-visita", rot:"com visita ao showroom"}
-    ];
+  function desenhar(SEMANA, DADOS, ANTERIOR, CRIATIVOS, MES, MARCA){
 
     // Se um eixo deixar de somar o total do CRM, a barra vira mentira — foi exatamente esse o bug
     // da primeira versão. Confere ANTES de desenhar qualquer coisa: falhando no meio, o cliente
@@ -539,42 +700,41 @@
 
     // Notas do rodapé: 1 = passou de 100% (calculado), 2 = Harley (WhatsApp, sempre).
     DADOS.forEach(function(d){
-      if(d.crm > d.midia) d.nota = 1;
-      else if(d.curto === "Harley-Davidson") d.nota = 2;
+      d.nota = d.crm > d.midia ? 1 : d.curto === "Harley-Davidson" ? 2 : 0;
     });
 
-    var fmtInt  = new Intl.NumberFormat("pt-BR");
-    var fmtBRL  = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2});
-    var fmtBRL0 = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:0,maximumFractionDigits:0});
-    var fmtPct  = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
-
-    // Divisão por zero (marca com CRM e sem lead de mídia, ou o contrário) vira "—", não "∞%".
-    function pct(v){ return isFinite(v) ? fmtPct.format(v) + "%" : "—"; }
-    function brl(v){ return isFinite(v) ? fmtBRL.format(v) : "—"; }
     function taxa(d){ return d.crm / d.midia * 100; }
     function cpl(d){ return d.inv / d.midia; }
-    function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-    function soma(campo){ return DADOS.reduce(function(a,d){ return a + d[campo]; },0); }
 
-    var T = {
-      inv:soma("inv"), midia:soma("midia"), crm:soma("crm"),
-      agend:soma("agend"), pend:soma("pend"), perd:soma("perd"), vend:soma("vend"),
-      vendas:soma("vendas"), fat:soma("fat")
-    };
+    var T = totais(DADOS);
+    var A = ANTERIOR && ANTERIOR.length ? totais(ANTERIOR) : null;
 
-    /* ── totais da semana ───────────────────────────────────── */
+    /* ── totais da semana, com a semana anterior ────────────── */
+    // Variação em %, e em pontos percentuais pra taxa. Sem semana anterior (primeira semana do
+    // histórico, marca que não rodava) ou com base zero, não mostra nada em vez de "∞%".
+    function variacao(atual, antes, pp){
+      if(!A || !isFinite(antes) || (!pp && !antes)) return "";
+      var v = pp ? atual - antes : (atual - antes) / antes * 100;
+      if(!isFinite(v)) return "";
+      var seta = Math.abs(v) < 0.05 ? "=" : v > 0 ? "▲" : "▼";
+      return seta + " " + fmtPct.format(Math.abs(v)) + (pp ? " p.p." : "%") + " <span>vs semana anterior</span>";
+    }
+
+    var onde = MARCA ? "Mídia paga em " + MARCA : "Mídia paga nas " + DADOS.length + " marcas";
     var kpis = [
-      {rot:"Investimento",    val:fmtBRL.format(T.inv),  nota:"Mídia paga nas " + DADOS.length + " marcas"},
-      {rot:"Gerados na mídia",val:fmtInt.format(T.midia),nota:"Leads entregues pelas plataformas de anúncio"},
-      {rot:"Leads no CRM",    val:fmtInt.format(T.crm),  nota:"Viraram registro no CRM da concessionária"},
-      {rot:"Chegou ao CRM",   val:pct(T.crm/T.midia*100),nota:"Leads no CRM dividido por gerados na mídia", destaque:true},
-      {rot:"Vendas faturadas",val:fmtInt.format(T.vendas),nota:"Contadas pela data do faturamento"},
-      {rot:"Faturamento",     val:fmtBRL0.format(T.fat), nota:"Soma das vendas faturadas na semana"}
+      {rot:"Investimento",    val:fmtBRL.format(T.inv),  delta:variacao(T.inv, A && A.inv),       nota:onde},
+      {rot:"Gerados na mídia",val:fmtInt.format(T.midia),delta:variacao(T.midia, A && A.midia),   nota:"Leads entregues pelas plataformas de anúncio"},
+      {rot:"Leads no CRM",    val:fmtInt.format(T.crm),  delta:variacao(T.crm, A && A.crm),       nota:"Viraram registro no CRM da concessionária"},
+      {rot:"Chegou ao CRM",   val:pct(T.crm/T.midia*100),
+        delta:variacao(T.crm/T.midia*100, A && A.crm/A.midia*100, true), nota:"Leads no CRM dividido por gerados na mídia", destaque:true},
+      {rot:"Vendas faturadas",val:fmtInt.format(T.vendas),delta:variacao(T.vendas, A && A.vendas), nota:"Contadas pela data do faturamento"},
+      {rot:"Faturamento",     val:fmtBRL0.format(T.fat), delta:variacao(T.fat, A && A.fat),       nota:"Soma das vendas faturadas na semana"}
     ];
     document.getElementById("totais").innerHTML = kpis.map(function(k){
       return '<div class="kpi' + (k.destaque ? " destaque" : "") + '">' +
         '<div class="rot">' + esc(k.rot) + '</div>' +
         '<div class="val">' + esc(k.val) + '</div>' +
+        (k.delta ? '<div class="delta">' + k.delta + '</div>' : "") +
         '<div class="nota">' + esc(k.nota) + '</div>' +
       '</div>';
     }).join("");
@@ -617,8 +777,11 @@
       '</div><div></div></div>';
 
     /* ── tabela exata ───────────────────────────────────────── */
+    // A página redesenha ao trocar semana ou marca: limpa o corpo antes, mantendo o <caption>.
+    var tabela = document.getElementById("tabela-midia");
+    Array.prototype.forEach.call(tabela.querySelectorAll("thead,tbody,tfoot"), function(e){ e.remove(); });
     var colunas = ["Marca","Investimento","Custo por lead","Gerados na mídia","Leads no CRM","Chegou ao CRM"];
-    document.getElementById("tabela-midia").insertAdjacentHTML("beforeend",
+    tabela.insertAdjacentHTML("beforeend",
       '<thead><tr>' + colunas.map(function(c){
         return '<th scope="col">' + esc(c) + '</th>';
       }).join("") + '</tr></thead>' +
@@ -689,42 +852,70 @@
       '</div>';
     }).join("");
 
-    /* ── textos que dependem da semana ──────────────────────── */
-    var MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto",
-                 "setembro","outubro","novembro","dezembro"];
-    function data(iso){ var p = iso.split("-"); return {d:+p[2], m:+p[1], a:+p[0]}; }
-    function dd(n){ return (n < 10 ? "0" : "") + n; }
-    function extenso(x){ return (x.d === 1 ? "1º" : x.d) + " de " + MESES[x.m-1] + " de " + x.a; }
-    // "5 a 11 de outubro de 2026" ou, virando o mês, "28 de setembro a 4 de outubro de 2026"
-    function intervalo(i, f){
-      return i.m === f.m ? i.d + " a " + extenso(f) : i.d + " de " + MESES[i.m-1] + " a " + extenso(f);
-    }
-    // "A", "A e B", "A, B e C"
-    function lista(n){ return n.length < 2 ? n.join("") : n.slice(0,-1).join(", ") + " e " + n[n.length-1]; }
-
     var ini = data(SEMANA.ini), fim = data(SEMANA.fim);
-    document.getElementById("periodo").textContent =
-      dd(ini.d) + "/" + dd(ini.m) + " a " + dd(fim.d) + "/" + dd(fim.m) + " de " + fim.a;
-    document.getElementById("rodape-semana").textContent =
-      "Grupo Germânica · Semana de " + intervalo(ini, fim);
-
     var nomes = semVenda.map(function(d){ return d.curto; });
     var semVendaEl = document.getElementById("sem-venda");
-    if(!nomes.length) semVendaEl.hidden = true;
-    else semVendaEl.textContent = lista(nomes) + (nomes.length === 1 ? " não teve" : " não tiveram") +
+    semVendaEl.hidden = !nomes.length;
+    semVendaEl.textContent = !nomes.length ? "" : lista(nomes) + (nomes.length === 1 ? " não teve" : " não tiveram") +
       " venda faturada de " + intervalo(ini, fim).replace(/ de \d{4}$/, "") + ".";
 
-    var acima = DADOS.filter(function(d){ return d.crm > d.midia; }).map(function(d){ return d.curto; });
-    document.getElementById("nota-100").textContent = acima.length
-      ? lista(acima) + (acima.length === 1 ? " registrou" : " registraram") + " no CRM mais leads do que a mídia contou."
-      : "Nesta semana nenhuma marca passou de 100%, mas acontece.";
+    /* ── criativos do mês ───────────────────────────────────── */
+    // O nome segue a nomenclatura "stroke | lead ad | varejo | marca | praça | mês | formato | peça".
+    // Título = a peça (último trecho); embaixo, o que sobra de útil (praça, formato). Nome fora
+    // do padrão aparece inteiro.
+    var FIXOS = /^(stroke|lead ad|varejo|geral|aon-\d{2}|[a-zç]{3}-\d{2})$/i;
+    function peca(nome){
+      var p = String(nome).split("|").map(function(s){ return s.trim(); }).filter(Boolean);
+      if(p.length < 4) return {titulo: nome, sub: ""};
+      var titulo = p[p.length-1];
+      var resto = p.slice(4, -1).filter(function(s){ return !FIXOS.test(s); });
+      return {titulo: titulo.charAt(0).toUpperCase() + titulo.slice(1), sub: resto.join(" · ")};
+    }
+    // Semana gerada antes de existir a coluna de criativos vem sem período: esconde só a seção,
+    // em vez de derrubar a página inteira com os números da semana que existem.
+    var secCriativos = document.getElementById("criativos");
+    secCriativos.hidden = !(MES && MES.de && MES.ate);
+    if(secCriativos.hidden) return terminarTextos();
+    var de = data(MES.de), ate = data(MES.ate);
+    document.getElementById("cr-periodo").textContent =
+      "De " + intervalo(de, ate).replace(/ de \d{4}$/, "") + (MARCA ? ", " + MARCA + "." : ", todas as marcas.");
+    document.getElementById("cr-lista").innerHTML = !CRIATIVOS.length
+      ? '<p class="cr-vazio">Nenhum criativo com lead no período.</p>'
+      : CRIATIVOS.map(function(c, i){
+          var n = peca(c.nome);
+          var imagem = c.imagem
+            ? '<img src="' + esc(c.imagem) + '" alt="' + esc(n.titulo) + '" loading="lazy" referrerpolicy="no-referrer">'
+            : '<span>sem imagem</span>';
+          return '<article class="cr" title="' + esc(c.nome) + '">' +
+            '<div class="cr-img">' + imagem + '</div>' +
+            '<div class="cr-pos">' + (i + 1) + '</div>' +
+            '<h3 class="cr-nome">' + esc(n.titulo) + '</h3>' +
+            '<div class="cr-sub">' + esc(c.curto + (n.sub ? " · " + n.sub : "")) + '</div>' +
+            '<div class="cr-nums"><b>' + fmtInt.format(c.leads) + '</b> leads · CPL ' + brl(c.gasto / c.leads) + '</div>' +
+          '</article>';
+        }).join("");
 
-    document.getElementById("carimbo").textContent =
-      "Dados do CRM consultados em " + extenso(data(SEMANA.consulta)) + ". A situação de cada lead e " +
-      "o faturamento continuam mudando depois que a semana fecha: o vendedor segue atendendo e a nota " +
-      "fiscal entra com atraso. Uma nova consulta desta mesma semana pode trazer outros números no " +
-      "funil e nas vendas.";
+    terminarTextos();
+
+    /* ── textos que dependem da semana ──────────────────────── */
+    function terminarTextos(){
+      document.getElementById("rodape-semana").textContent =
+        "Grupo Germânica · Semana de " + intervalo(ini, fim);
+
+      var acima = DADOS.filter(function(d){ return d.crm > d.midia; }).map(function(d){ return d.curto; });
+      document.getElementById("nota-100").textContent = acima.length
+        ? lista(acima) + (acima.length === 1 ? " registrou" : " registraram") + " no CRM mais leads do que a mídia contou."
+        : "Nesta semana nenhuma marca passou de 100%, mas acontece.";
+
+      document.getElementById("carimbo").textContent =
+        "Dados do CRM consultados em " + extenso(data(SEMANA.consulta)) + ". A situação de cada lead e " +
+        "o faturamento continuam mudando depois que a semana fecha: o vendedor segue atendendo e a nota " +
+        "fiscal entra com atraso. Uma nova consulta desta mesma semana pode trazer outros números no " +
+        "funil e nas vendas.";
+    }
   }
+
+  carregar();
 })();
 </script>
 </body>
