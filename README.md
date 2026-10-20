@@ -12,16 +12,16 @@ O repositório no GitHub é só o código. O site não é servido de lá.
 
 ## Como se atualiza sozinho
 
-1. **Segunda, 6h** — o acionador do Apps Script da planilha semanal
-   (`docs/apps-script/germanica-planilha-semanal.gs` no repo da Stroke, função
-   `preencherSemanaPassada`) preenche a planilha e chama `relatorio_germanica_gerar()`.
+1. **Segunda, 06:30 de Brasília** — o pg_cron do próprio Supabase (job `relatorio_germanica_semanal`)
+   chama `relatorio_germanica_gerar()`. Não depende de máquina, conta Google nem Apps Script.
 2. A função calcula a última semana fechada e grava uma linha em `relatorio_germanica_semanal`.
    Ela se recusa a gravar semana sem lead nenhum (coleta parada), semana em andamento ou semana
-   em que os eixos do funil não fecham o total do CRM. Aí o acionador falha e o Google manda e-mail.
+   em que os eixos do funil não fecham o total do CRM. Falha fica em `cron.job_run_details`.
 3. A página busca `/dados.json`, que devolve a linha mais recente. Não precisa publicar de novo:
    muda o dado, a página é a mesma.
 
-SQL da tabela e da função: `power law/sql/2026-10-14-relatorio-germanica-semanal.sql` (repo da Stroke).
+SQL: `power law/sql/2026-10-14-relatorio-germanica-semanal.sql` (tabela) e
+`power law/sql/2026-10-20-relatorio-germanica-criativos.sql` (função atual, criativos, agendamento), no repo da Stroke.
 
 **Regerar uma semana na mão** (corrigiu dado, entrou venda atrasada), no SQL Editor do Supabase:
 
