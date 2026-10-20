@@ -35,6 +35,7 @@
     --c-midia:var(--meta);      /* leads gerados na mídia */
     --c-crm:#82828f;            /* leads registrados no CRM */
     --c-agend:var(--meta);      /* em andamento */
+    --c-opor:#0b7f7a;           /* proposta enviada ou aguardando faturamento */
     --c-pend:var(--alerta);     /* parado, sem atendimento */
     --c-perd:#82828f;           /* finalizado sem venda */
     --c-vend:var(--venda);      /* finalizado com venda */
@@ -215,7 +216,7 @@
   /* ── funil ───────────────────────────────────────────────── */
   .funil{border-top:1px solid var(--border);max-width:940px}
   .f-linha{
-    display:grid;grid-template-columns:150px 1fr 172px;align-items:center;
+    display:grid;grid-template-columns:150px 1fr 210px;align-items:center;
     gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--border)
   }
   .f-marca{font-size:14px;color:var(--text)}
@@ -396,6 +397,8 @@
         <p class="apoio max-leitura">
           <strong style="color:var(--text);font-weight:500">Em agendamento</strong> tem agendamento
           criado e segue em andamento;
+          <strong style="color:var(--text);font-weight:500">proposta ou faturamento</strong> já recebeu
+          proposta ou aguarda a nota;
           <strong style="color:var(--text);font-weight:500">sem atendimento</strong> entrou e ninguém
           mexeu;
           <strong style="color:var(--text);font-weight:500">perdido</strong> e
@@ -403,6 +406,7 @@
         </p>
         <div class="legenda">
           <span><i class="chave q" style="background:var(--c-agend)"></i>Em agendamento</span>
+          <span><i class="chave q" style="background:var(--c-opor)"></i>Proposta ou faturamento</span>
           <span><i class="chave q" style="background:var(--c-pend)"></i>Sem atendimento</span>
           <span><i class="chave q" style="background:var(--c-perd)"></i>Perdido</span>
           <span><i class="chave q" style="background:var(--c-vend)"></i>Vendido</span>
@@ -669,6 +673,7 @@
   /* ── desenho ────────────────────────────────────────────── */
   var ESTADOS = [
     {campo:"agend", cor:"--c-agend", rot:"em agendamento"},
+    {campo:"opor",  cor:"--c-opor",  rot:"com proposta ou aguardando faturamento"},
     {campo:"pend",  cor:"--c-pend",  rot:"sem atendimento"},
     {campo:"perd",  cor:"--c-perd",  rot:"perdidos"},
     {campo:"vend",  cor:"--c-vend",  rot:"vendidos"}
@@ -687,6 +692,9 @@
   }
 
   function desenhar(SEMANA, DADOS, ANTERIOR, CRIATIVOS, MES, MARCA){
+
+    // Semana gerada antes de existir o status de oportunidade (20/10) não traz o campo: é zero.
+    DADOS.concat(ANTERIOR || []).forEach(function(d){ if(d.opor == null) d.opor = 0; });
 
     // Se um eixo deixar de somar o total do CRM, a barra vira mentira — foi exatamente esse o bug
     // da primeira versão. Confere ANTES de desenhar qualquer coisa: falhando no meio, o cliente
