@@ -209,6 +209,9 @@
   td:first-child{font-family:var(--sans);color:var(--ink)}
   tbody tr:hover td{background:var(--surface-2)}
   tbody tr:hover td:first-child{background:var(--surface-2)}
+  /* histórico: a semana escolhida no topo fica marcada, como a linha amarela da planilha */
+  #tabela-hist tbody tr.atual > *{background:var(--surface-2);color:var(--ink);font-weight:600}
+  #tabela-hist tbody th{white-space:nowrap}
   tfoot td{border-bottom:0;border-top:1px solid var(--border-strong);color:var(--ink);font-weight:500;padding-top:var(--sp-4)}
   tfoot td:first-child{font-weight:600}
   sup.ref{color:var(--muted);font-family:var(--sans);font-size:11px}
@@ -378,6 +381,23 @@
       <div class="tabela-caixa">
         <table id="tabela-midia">
           <caption>Números exatos da semana, ordenados por investimento.</caption>
+        </table>
+      </div>
+    </section>
+
+    <section id="historico">
+      <div class="sec-cab">
+        <h2>Semana a semana</h2>
+        <p class="apoio max-leitura">
+          <span id="hist-escopo"></span> Uma linha por semana, no formato da planilha de acompanhamento,
+          com a semana escolhida no topo em destaque. Qualificados são os leads em que o vendedor
+          registrou contato feito, negociação ou visita.
+        </p>
+      </div>
+      <p class="dica-scroll">Arraste a tabela para o lado para ver todas as colunas.</p>
+      <div class="tabela-caixa">
+        <table id="tabela-hist">
+          <caption>Evolução semanal, da semana mais antiga para a mais recente.</caption>
         </table>
       </div>
     </section>
@@ -647,6 +667,7 @@
         j.criativos,
         m
       );
+      historico(j.historico || [], m, j.semana_ini);
     } catch(e){ falha(e); }
   }
 
@@ -689,6 +710,48 @@
   function totais(dados){
     function soma(c){ return dados.reduce(function(a,d){ return a + d[c]; }, 0); }
     return {inv:soma("inv"), midia:soma("midia"), crm:soma("crm"), vendas:soma("vendas"), fat:soma("fat")};
+  }
+
+  /* ── histórico semana a semana ──────────────────────────── */
+  // Mesmo formato da planilha "Acompanhamento - VAREJO META" que o time preenchia: uma linha
+  // por semana, "SEM 42: 12/10 a 18/10". Sem marca escolhida, a linha é o grupo somado.
+  var SEM1 = Date.UTC(2025, 11, 29);   // SEM 1 = segunda 29/12/2025, a mesma da planilha
+  function numSemana(iso){ var p = iso.split("-"); return Math.round((Date.UTC(+p[0], +p[1]-1, +p[2]) - SEM1) / 6048e5) + 1; }
+
+  function historico(HIST, MARCA, atual){
+    document.getElementById("hist-escopo").textContent = MARCA ? MARCA + "." : "Todas as marcas somadas.";
+    var linhas = HIST.map(function(s){
+      var ms = s.marcas.filter(function(d){ return !MARCA || d.curto === MARCA; });
+      var t = {inv:0, midia:0, crm:0, qualif:0, vendas:0, fat:0};
+      ms.forEach(function(d){ Object.keys(t).forEach(function(k){ t[k] += d[k] || 0; }); });
+      t.semana = s;
+      return t;
+    // Semana em que a marca não rodou não vira linha de zeros.
+    }).filter(function(t){ return t.inv || t.midia || t.crm || t.vendas; });
+
+    var tabela = document.getElementById("tabela-hist");
+    Array.prototype.forEach.call(tabela.querySelectorAll("thead,tbody"), function(e){ e.remove(); });
+    var colunas = ["Semana","Investimento","Leads gerados","CPL","Leads no CRM","% no CRM",
+                   "Qualificados","% qualificados","Vendas","Faturamento"];
+    tabela.insertAdjacentHTML("beforeend",
+      '<thead><tr>' + colunas.map(function(c){ return '<th scope="col">' + esc(c) + '</th>'; }).join("") + '</tr></thead>' +
+      '<tbody>' + linhas.map(function(t){
+        var i = data(t.semana.semana_ini), f = data(t.semana.semana_fim);
+        return '<tr' + (t.semana.semana_ini === atual ? ' class="atual"' : '') + '>' +
+          '<th scope="row" style="font-family:var(--mono);font-weight:400;font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0">' +
+            'SEM ' + numSemana(t.semana.semana_ini) + ': ' + dd(i.d) + '/' + dd(i.m) + ' a ' + dd(f.d) + '/' + dd(f.m) + '</th>' +
+          '<td>' + fmtBRL.format(t.inv) + '</td>' +
+          '<td>' + fmtInt.format(t.midia) + '</td>' +
+          '<td>' + brl(t.inv / t.midia) + '</td>' +
+          '<td>' + fmtInt.format(t.crm) + '</td>' +
+          '<td>' + pct(t.crm / t.midia * 100) + '</td>' +
+          '<td>' + fmtInt.format(t.qualif) + '</td>' +
+          '<td>' + pct(t.qualif / t.crm * 100) + '</td>' +
+          '<td>' + fmtInt.format(t.vendas) + '</td>' +
+          '<td>' + fmtBRL0.format(t.fat) + '</td>' +
+        '</tr>';
+      }).join("") + '</tbody>'
+    );
   }
 
   function desenhar(SEMANA, DADOS, ANTERIOR, CRIATIVOS, MES, MARCA){

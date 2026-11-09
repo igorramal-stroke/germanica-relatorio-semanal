@@ -27,27 +27,36 @@ export async function onRequestGet({ env, request }) {
   const base = env.SUPABASE_URL + "/rest/v1/relatorio_germanica_semanal";
   const ler = (consulta) => buscar(base + consulta, env.SUPABASE_SERVICE_ROLE_KEY);
 
-  // ponytail: a lista inteira de semanas a cada acesso; ~52 linhas pequenas por ano. Paginar se
-  // um dia passar de alguns anos de histórico.
-  const semanas = await ler("?select=semana_ini,semana_fim&order=semana_ini.desc");
-  if (semanas.erro) return json({ erro: semanas.erro }, 502);
-  if (!semanas.length) return json({ erro: "nenhuma semana gerada ainda" }, 404);
+  // Todas as semanas, com os números (sem os criativos, que são pesados): servem o seletor, o
+  // comparativo com a anterior e o histórico semana a semana numa leitura só.
+  // ponytail: ~52 linhas por ano, ~3 KB cada. Paginar se um dia passar de alguns anos.
+  const todas = await ler("?select=semana_ini,semana_fim,gerado_em,dados&order=semana_ini.desc");
+  if (todas.erro) return json({ erro: todas.erro }, 502);
+  if (!todas.length) return json({ erro: "nenhuma semana gerada ainda" }, 404);
 
-  const alvo = pedida ? semanas.find((s) => s.semana_ini === pedida) : semanas[0];
-  if (!alvo) return json({ erro: "semana não encontrada" }, 404);
-  const anterior = menosSete(alvo.semana_ini);
-
-  const linhas = await ler("?select=semana_ini,semana_fim,gerado_em,dados,criativos"
-    + "&semana_ini=in.(" + alvo.semana_ini + "," + anterior + ")");
-  if (linhas.erro) return json({ erro: linhas.erro }, 502);
-
-  const atual = linhas.find((l) => l.semana_ini === alvo.semana_ini);
-  const antes = linhas.find((l) => l.semana_ini === anterior);
+  const atual = pedida ? todas.find((s) => s.semana_ini === pedida) : todas[0];
   if (!atual) return json({ erro: "semana não encontrada" }, 404);
+  const antes = todas.find((s) => s.semana_ini === menosSete(atual.semana_ini));
+
+  const cri = await ler("?select=criativos&semana_ini=eq." + atual.semana_ini);
+  if (cri.erro) return json({ erro: cri.erro }, 502);
 
   const publico = env.SUPABASE_URL + "/storage/v1/object/public/creatives/";
-  const criativos = atual.criativos || { lista: [] };
+  const criativos = (cri[0] && cri[0].criativos) || { lista: [] };
   criativos.lista = (criativos.lista || []).map((c) => ({ ...c, imagem: c.imagem ? publico + c.imagem : null }));
+
+  // Histórico no formato da planilha antiga do cliente: uma linha por semana, da mais antiga
+  // pra mais recente. Só o que a tabela mostra; qualificados = motivo 2, 3 ou 4 (contato feito,
+  // negociação, visita), a definição oficial da planilha.
+  const historico = todas.slice().reverse().map((s) => ({
+    semana_ini: s.semana_ini,
+    semana_fim: s.semana_fim,
+    marcas: s.dados.map((d) => ({
+      curto: d.curto, inv: d.inv, midia: d.midia, crm: d.crm,
+      qualif: d.falou + d.negoc + d.visita, vendas: d.vendas, fat: d.fat,
+    })),
+  }));
+  const semanas = todas.map((s) => ({ semana_ini: s.semana_ini, semana_fim: s.semana_fim }));
 
   // 5 min: a tabela muda uma vez por semana, mas não deixa o navegador segurar dado velho por
   // horas depois de uma regeração manual.
@@ -59,6 +68,7 @@ export async function onRequestGet({ env, request }) {
     criativos,
     anterior: antes ? { semana_ini: antes.semana_ini, dados: antes.dados } : null,
     semanas,
+    historico,
   }, 200, "public, max-age=300");
 }
 
