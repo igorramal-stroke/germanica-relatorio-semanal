@@ -118,7 +118,9 @@
     border-top:1px solid var(--border);border-bottom:1px solid var(--border);
     display:grid;grid-template-columns:repeat(3,1fr);
   }
-  .kpi{padding:var(--sp-6) var(--sp-4) var(--sp-6) 0;border-right:1px solid var(--border)}
+  /* respiro dos dois lados da régua vertical; só a 1ª coluna encosta na margem */
+  .kpi{padding:var(--sp-6);border-right:1px solid var(--border)}
+  .kpi:nth-child(3n+1){padding-left:0}
   .kpi:nth-child(3n){border-right:0;padding-right:0}
   .kpi:nth-child(n+4){border-top:1px solid var(--border)}
   .kpi .rot{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
@@ -133,7 +135,11 @@
   .kpi.destaque .val{color:var(--stroke-red)}
   @media (max-width:760px){
     .totais{grid-template-columns:repeat(2,1fr)}
-    .kpi:nth-child(3n){border-right:1px solid var(--border);padding-right:var(--sp-4)}
+    .kpi, .kpi:nth-child(3n), .kpi:nth-child(3n+1){
+      padding:var(--sp-6) var(--sp-4);border-right:1px solid var(--border)
+    }
+    .kpi:nth-child(2n+1){padding-left:0}
+    .kpi .delta span{display:block}
     .kpi:nth-child(2n){border-right:0;padding-right:0}
     .kpi:nth-child(n+3){border-top:1px solid var(--border)}
   }
@@ -827,9 +833,11 @@
     }
 
     var onde = MARCA ? "Mídia paga em " + MARCA : "Mídia paga nas " + DADOS.length + " marcas";
+    var temWhats = DADOS.some(function(d){ return COM_WHATSAPP.indexOf(d.curto) >= 0; });
     var kpis = [
       {rot:"Investimento",    val:fmtBRL.format(T.inv),  delta:variacao(T.inv, A && A.inv),       nota:onde},
-      {rot:"Gerados na mídia",val:fmtInt.format(T.midia),delta:variacao(T.midia, A && A.midia),   nota:"Leads entregues pelas plataformas de anúncio"},
+      {rot:"Gerados na mídia",val:fmtInt.format(T.midia),delta:variacao(T.midia, A && A.midia),
+        nota: temWhats ? "Formulários de anúncio e conversas de WhatsApp" : "Formulários de anúncio"},
       {rot:"Leads no CRM",    val:fmtInt.format(T.crm),  delta:variacao(T.crm, A && A.crm),       nota:"Viraram registro no CRM da concessionária"},
       {rot:"Chegou ao CRM",   val:pct(T.crm/T.midia*100),
         delta:variacao(T.crm/T.midia*100, A && A.crm/A.midia*100, true), nota:"Leads no CRM dividido por gerados na mídia", destaque:true},
