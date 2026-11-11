@@ -526,12 +526,12 @@
       <div class="nota-item">
         <span class="idx">2</span>
         <div>
-          <h3>Por que a Harley-Davidson tem taxa mais baixa</h3>
+          <h3>Por que as marcas com WhatsApp têm taxa mais baixa</h3>
           <p>
-            A Tennessee Harley-Davidson anuncia também por WhatsApp, e cada conversa iniciada conta
-            como lead do lado da mídia. Nem toda conversa vira registro no CRM, então a taxa dela
-            tende a ficar abaixo das outras marcas, que usam só formulário. Por isso a taxa da Harley
-            pede leitura junto do custo por lead, e não isolada.
+            Harley-Davidson, Lexus, BMW, BMW Motorrad e MINI anunciam também por WhatsApp. Do lado
+            da mídia, cada conversa iniciada conta como lead; do lado do CRM, contam os leads que
+            chegam pela Duotalk. Nem toda conversa vira registro no CRM, então a taxa dessas marcas
+            fica abaixo das que usam só formulário e pede leitura junto do custo por lead.
           </p>
         </div>
       </div>
@@ -802,9 +802,11 @@
       });
     });
 
-    // Notas do rodapé: 1 = passou de 100% (calculado), 2 = Harley (WhatsApp, sempre).
+    // Notas do rodapé: 1 = passou de 100% (calculado), 2 = marca com WhatsApp (sempre, no varejo).
+    // Mesma lista do SQL (power law/sql/2026-11-11-relatorio-germanica-whatsapp.sql).
+    var COM_WHATSAPP = ["Harley-Davidson", "Lexus", "BMW", "BMW Motorrad", "MINI"];
     DADOS.forEach(function(d){
-      d.nota = d.crm > d.midia ? 1 : d.curto === "Harley-Davidson" ? 2 : 0;
+      d.nota = d.crm > d.midia ? 1 : COM_WHATSAPP.indexOf(d.curto) >= 0 ? 2 : 0;
     });
 
     function taxa(d){ return d.crm / d.midia * 100; }
