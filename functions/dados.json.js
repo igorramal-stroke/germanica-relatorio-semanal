@@ -52,7 +52,7 @@ export async function onRequestGet({ env, request }) {
     semana_ini: s.semana_ini,
     semana_fim: s.semana_fim,
     marcas: s.dados.map((d) => ({
-      curto: d.curto, inv: d.inv, midia: d.midia, crm: d.crm,
+      frente: d.frente || "varejo", curto: d.curto, inv: d.inv, midia: d.midia, crm: d.crm,
       qualif: d.falou + d.negoc + d.visita, vendas: d.vendas, fat: d.fat,
     })),
   }));

@@ -109,6 +109,7 @@
     background-repeat:no-repeat;background-position:right 12px center
   }
   .sel:hover{border-color:var(--muted)}
+  .sel.sel-curto{min-width:160px}
   .sel:focus-visible{outline:2px solid var(--meta);outline-offset:2px}
   @media (max-width:640px){.controle{flex:1 1 160px}.sel{min-width:0;width:100%}}
 
@@ -345,6 +346,14 @@
         <div class="controle">
           <label for="sel-semana">Semana</label>
           <select id="sel-semana" class="sel"></select>
+        </div>
+        <div class="controle">
+          <label for="sel-frente">Frente</label>
+          <select id="sel-frente" class="sel sel-curto">
+            <option value="varejo">Varejo</option>
+            <option value="vd">Venda direta</option>
+            <option value="assinatura">Assinatura</option>
+          </select>
         </div>
         <div class="controle">
           <label for="sel-marca">Marca</label>
@@ -585,15 +594,22 @@
   // vazia viraria 0/0 = "NaN%" na frente do cliente.
   function ativas(dados){ return dados.filter(function(d){ return d.inv || d.midia || d.crm || d.vendas; }); }
 
+  // Frente da linha. Semana gerada antes de 11/11 só tem varejo e não traz o campo.
+  var FRENTES = ["varejo", "vd", "assinatura"];
+  function frenteDe(d){ return d.frente || "varejo"; }
+
   /* ── estado e endereço ──────────────────────────────────── */
-  // Semana e marca escolhidas ficam no endereço (?semana=AAAA-MM-DD&marca=GWM): dá pra mandar o
-  // link já filtrado, e recarregar a página não perde a escolha.
+  // Semana, frente e marca escolhidas ficam no endereço (?semana=AAAA-MM-DD&frente=vd&marca=GWM):
+  // dá pra mandar o link já filtrado, e recarregar a página não perde a escolha. Varejo é o padrão
+  // e não aparece no endereço, então os links antigos continuam abrindo igual.
   var url = new URLSearchParams(location.search);
-  var estado = {semana: url.get("semana") || "", marca: url.get("marca") || "", j: null};
+  var estado = {semana: url.get("semana") || "", marca: url.get("marca") || "", j: null,
+                frente: FRENTES.indexOf(url.get("frente")) >= 0 ? url.get("frente") : "varejo"};
 
   function gravarEndereco(){
     var p = new URLSearchParams();
     if(estado.semana) p.set("semana", estado.semana);
+    if(estado.frente !== "varejo") p.set("frente", estado.frente);
     if(estado.marca) p.set("marca", estado.marca);
     var q = p.toString();
     history.replaceState(null, "", location.pathname + (q ? "?" + q : ""));
@@ -601,7 +617,17 @@
 
   var selSemana = document.getElementById("sel-semana");
   var selMarca  = document.getElementById("sel-marca");
+  var selFrente = document.getElementById("sel-frente");
+  selFrente.value = estado.frente;
 
+  // Trocar de frente zera a marca: a mesma marca na outra frente é outro negócio.
+  selFrente.addEventListener("change", function(){
+    estado.frente = selFrente.value;
+    estado.marca = "";
+    gravarEndereco();
+    montarSeletores(estado.j);
+    redesenhar();
+  });
   selSemana.addEventListener("change", function(){
     estado.semana = selSemana.value;
     gravarEndereco();
@@ -644,7 +670,8 @@
 
     // Só oferece marca que teve movimento na semana. Se a escolhida sumiu (semana em que ela
     // não rodava), volta pra todas em vez de desenhar uma página vazia.
-    var marcas = ativas(j.dados).map(function(d){ return d.curto; });
+    var marcas = ativas(j.dados).filter(function(d){ return frenteDe(d) === estado.frente; })
+                                .map(function(d){ return d.curto; });
     if(estado.marca && marcas.indexOf(estado.marca) < 0){ estado.marca = ""; gravarEndereco(); }
     selMarca.innerHTML = '<option value="">Todas as marcas</option>' + marcas.map(function(m){
       return '<option value="' + esc(m) + '">' + esc(m) + '</option>';
@@ -653,10 +680,16 @@
   }
 
   function redesenhar(){
-    var j = estado.j, m = estado.marca;
-    function daMarca(d){ return !m || d.curto === m; }
+    var j = estado.j, m = estado.marca, fr = estado.frente;
+    function daMarca(d){ return frenteDe(d) === fr && (!m || d.curto === m); }
     try {
       limparFalha();
+      // Frente sem nenhum número na semana (semana antiga, só com varejo; frente que não rodou):
+      // diz isso em vez de desenhar uma página de zeros.
+      if(!ativas(j.dados).filter(daMarca).length){
+        var nomeFrente = selFrente.options[selFrente.selectedIndex].text;
+        return falha(null, "Esta semana não tem números de " + nomeFrente + ". Escolha outra semana ou outra frente.");
+      }
       // gerado_em é timestamp UTC; o carimbo mostra o dia em Brasília.
       var consulta = new Date(j.gerado_em).toLocaleDateString("sv-SE", {timeZone: "America/Sao_Paulo"});
       desenhar(
@@ -667,18 +700,18 @@
         j.criativos,
         m
       );
-      historico(j.historico || [], m, j.semana_ini);
+      historico(j.historico || [], m, j.semana_ini, fr);
     } catch(e){ falha(e); }
   }
 
   // Sem dado, a página diz isso em vez de ficar em branco ou mostrar número velho.
-  function falha(e){
+  function falha(e, texto){
     limparFalha();
     var aviso = document.createElement("p");
     aviso.className = "sem-js";
     aviso.id = "aviso-falha";
-    aviso.textContent = "Não foi possível carregar os números desta semana (" + e.message + "). " +
-      "Avise a Stroke.";
+    aviso.textContent = texto || ("Não foi possível carregar os números desta semana (" + e.message + "). " +
+      "Avise a Stroke.");
     var alvo = document.getElementById("totais");
     alvo.parentNode.insertBefore(aviso, alvo);
     alvo.hidden = true;
@@ -718,10 +751,10 @@
   var SEM1 = Date.UTC(2025, 11, 29);   // SEM 1 = segunda 29/12/2025, a mesma da planilha
   function numSemana(iso){ var p = iso.split("-"); return Math.round((Date.UTC(+p[0], +p[1]-1, +p[2]) - SEM1) / 6048e5) + 1; }
 
-  function historico(HIST, MARCA, atual){
+  function historico(HIST, MARCA, atual, FRENTE){
     document.getElementById("hist-escopo").textContent = MARCA ? MARCA + "." : "Todas as marcas somadas.";
     var linhas = HIST.map(function(s){
-      var ms = s.marcas.filter(function(d){ return !MARCA || d.curto === MARCA; });
+      var ms = s.marcas.filter(function(d){ return frenteDe(d) === FRENTE && (!MARCA || d.curto === MARCA); });
       var t = {inv:0, midia:0, crm:0, qualif:0, vendas:0, fat:0};
       ms.forEach(function(d){ Object.keys(t).forEach(function(k){ t[k] += d[k] || 0; }); });
       t.semana = s;
@@ -934,12 +967,17 @@
     // O nome segue a nomenclatura "stroke | lead ad | varejo | marca | praça | mês | formato | peça".
     // Título = a peça (último trecho); embaixo, o que sobra de útil (praça, formato). Nome fora
     // do padrão aparece inteiro.
-    var FIXOS = /^(stroke|lead ad|varejo|geral|aon-\d{2}|[a-zç]{3}-\d{2})$/i;
-    function peca(nome){
+    // Assinatura tem um trecho a mais: "stroke | lead ad | assinatura | grupo | marca | praça | ...".
+    var FIXOS = /^(stroke|lead ad|varejo|vd|assinatura|grupo|geral|aon-\d{2}|[a-zç]{3,6}-\d{2})$/i;
+    function peca(nome, curto){
       var p = String(nome).split("|").map(function(s){ return s.trim(); }).filter(Boolean);
       if(p.length < 4) return {titulo: nome, sub: ""};
       var titulo = p[p.length-1];
-      var resto = p.slice(4, -1).filter(function(s){ return !FIXOS.test(s); });
+      var resto = p.slice(3, -1).filter(function(s){
+        // a marca já aparece no subtítulo: "toyota" em "Toyota Nipônica", "motorrad" em "BMW Motorrad"
+        var t = s.toLowerCase();
+        return !FIXOS.test(s) && !(t.length >= 3 && String(curto).toLowerCase().indexOf(t) >= 0);
+      });
       return {titulo: titulo.charAt(0).toUpperCase() + titulo.slice(1), sub: resto.join(" · ")};
     }
     // Semana gerada antes de existir a coluna de criativos vem sem período: esconde só a seção,
@@ -953,7 +991,7 @@
     document.getElementById("cr-lista").innerHTML = !CRIATIVOS.length
       ? '<p class="cr-vazio">Nenhum criativo com lead no período.</p>'
       : CRIATIVOS.map(function(c, i){
-          var n = peca(c.nome);
+          var n = peca(c.nome, c.curto);
           var imagem = c.imagem
             ? '<img src="' + esc(c.imagem) + '" alt="' + esc(n.titulo) + '" loading="lazy" referrerpolicy="no-referrer">'
             : '<span>sem imagem</span>';
